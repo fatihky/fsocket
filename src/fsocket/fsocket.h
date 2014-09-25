@@ -24,9 +24,12 @@
 #define FSOCK_CONNECTED 0x2
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 #define FSOCK_TCP_INBUF (16 * 1024)
 #define FSOCK_TCP_OBUF (32 * 1024)
 
+=======
+>>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 =======
 >>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 typedef struct fsock_srv fsock_srv;
@@ -55,6 +58,10 @@ struct rmy_conn {
 
 struct fsock_cli {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    fsock_conn *conn;
+>>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 =======
     fsock_conn *conn;
 >>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133

@@ -4,7 +4,11 @@
 void on_data(fsock_conn *c, fstream_frame *f, void *arg)
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
     //log("client sent: %s", f->data);
+=======
+    log("client sent: %s", f->data);
+>>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 =======
     log("client sent: %s", f->data);
 >>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
