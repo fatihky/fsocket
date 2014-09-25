@@ -1,0 +1,4 @@
+fsocket
+=======
+
+framed sockets library
