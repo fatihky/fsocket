@@ -1,11 +1,5 @@
 #include "fstream.h"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #include "fsocket.h" // FSOCK_TCP_OBUF
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 #include <string.h>
 
 fstream_frame *rmy_frame_new()
@@ -64,14 +58,10 @@ void *fstream_prepare_to_write(fstream *s, int *len)
     if(sdslen(s->obuf) == 0)
         return NULL;
     *len = (int)sdslen(s->obuf);
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     if(*len > FSOCK_TCP_OBUF)
         *len = FSOCK_TCP_OBUF;
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
+
     return (void *)s->obuf;
 }
 

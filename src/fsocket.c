@@ -7,17 +7,12 @@
 #include <errno.h>
 #include "fsocket.h"
 #include "anet.h"
-<<<<<<< HEAD
-<<<<<<< HEAD
 #include "../debug.h"
-=======
+
 
 #define FSOCK_TCP_INBUF (16 * 1024)
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
 
 #define FSOCK_TCP_INBUF (16 * 1024)
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 
 static fsock_conn *fsock_conn_new(fsock_srv *s, int fd, char *ip, int port);
 
@@ -42,15 +37,9 @@ static void _srv_read_cb(EV_P_ struct ev_io *r, int revents)
     int sz = FSOCK_TCP_INBUF;
 	int bytes = 0;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     if(sz < fstream_must_read(c->stream))
         sz = fstream_must_read(c->stream);
 
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 	char *p = fstream_prepare_to_read(c->stream, sz);
 
 	bytes = read(c->fd, p, sz);
@@ -67,13 +56,7 @@ static void _srv_read_cb(EV_P_ struct ev_io *r, int revents)
         {
             // no data
             // continue to wait for recv
-<<<<<<< HEAD
-<<<<<<< HEAD
             //log("no data, continue to wait for recv");
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
             return;
         } else {
             // error at server recv
@@ -82,13 +65,8 @@ static void _srv_read_cb(EV_P_ struct ev_io *r, int revents)
         }
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     //log("%d bytes received", bytes);
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
+
     fstream_decode_input(c->stream, _srv_frame_handler, c);
 
 	_fsock_add_write(c);
@@ -120,8 +98,7 @@ static void _srv_write_cb(EV_P_ struct ev_io *w, int revents)
 		if ((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
 			(errno == EINTR)) {
 			/* do nothing, try again. */
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 			//log("do nothing, try again");
 		} else {
 			// TODO: what I must do in here?
@@ -132,9 +109,7 @@ static void _srv_write_cb(EV_P_ struct ev_io *w, int revents)
 	    //log("%d bytes written", bytes);
 	    fstream_data_written(c->stream, bytes);
 		if (fstream_output_size(c->stream) == 0) {
-=======
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
+
 		} else {
 			// TODO: what I must do in here?
 			return;
@@ -142,10 +117,6 @@ static void _srv_write_cb(EV_P_ struct ev_io *w, int revents)
 	} else if(bytes > 0) {
 	    fstream_data_written(c->stream, bytes);
 		if (bytes == fstream_output_size(c->stream)) {
-<<<<<<< HEAD
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 			_fsock_del_write(c); // and, stop write event of course
 		} else {
 		}
@@ -163,14 +134,6 @@ static int __cli_handle_connect(fsock_cli *c)
 
 void _cli_read_cb(EV_P_ struct ev_io *r, int revents)
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    // log("triggered");
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
-    // log("triggered");
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
     fsock_cli *c = (fsock_cli *)r->data;
 
     // I copied this from hiredis
@@ -187,15 +150,9 @@ void _cli_read_cb(EV_P_ struct ev_io *r, int revents)
     int sz = FSOCK_TCP_INBUF;
 	int bytes = 0;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     if(sz < fstream_must_read(c->stream))
         sz = fstream_must_read(c->stream);
 
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
 	char *p = fstream_prepare_to_read(c->stream, sz);
 
 	bytes = read(c->fd, p, sz);
@@ -253,39 +210,17 @@ void _cli_write_cb(EV_P_ struct ev_io *w, int revents)
 			/* do nothing, try again. */
 		} else {
 			// TODO: what I must do in here?
-<<<<<<< HEAD
-<<<<<<< HEAD
 			fsock_cli_destroy(c);
 			return;
 		}
 	} else if(bytes > 0) {
-	    //log("%d bytes written", bytes);
 	    fstream_data_written(c->stream, bytes);
 		if (fstream_output_size(c->stream) == 0) {
-		    //log("all data is written");
 			_fsock_del_write(c); // and, stop write event of course
 		} else {
-		    //log("bytes: %d otunput size: %zu", bytes, fstream_output_size(c->stream)); 
-            // maybe resize input buffer
 		}
 	} else if(bytes == 0) {
-	    //log("bytes == 0");
-=======
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-			return;
-		}
-	} else if(bytes > 0) {
-	    fstream_data_written(c->stream, bytes);
-		if (bytes == fstream_output_size(c->stream)) {
-			_fsock_del_write(c); // and, stop write event of course
-		} else {
-            // maybe resize input buffer
-		}
-<<<<<<< HEAD
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
-=======
->>>>>>> dda8e1a58047d3ecd69c9aca4fcd06237d8d9133
+		return;
 	}
 }
 
