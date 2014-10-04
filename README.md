@@ -20,6 +20,9 @@ If you want to uninstall just run `sudo make uninstall`.
 First, it has a simple binary protocol. That is just length prefixed stream.<br/>
 `[4 bytes length] [n bytes data] ...`
 
+So you just think based on frames. All buffering jobs done in back.
+
+
 Example server:
 ```c
 
