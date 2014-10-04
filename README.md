@@ -4,7 +4,7 @@
 
 It's very young project. With fsocket, you can easily communicate over tcp.
 
-## Dependencies:
+### Dependencies:
 libev (for installiatation in ubuntu: `sudo apt-get install libev-dev`)
 
 For installiatation:
@@ -15,6 +15,14 @@ sudo make install
 
 Run `make test` to compile examples.
 If you want to uninstall just run `sudo make uninstall`.
+
+### What makes it useful?
+First, it has a simple binary protocol. That is just length prefixed stream.<br/>
+|-------------------|<br/>
+| length  |  data   |<br/>
+|-------------------|<br/>
+| 4 bytes | n bytes |<br/>
+|-------------------|
 
 Example server:
 ```c
