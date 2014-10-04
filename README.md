@@ -1,11 +1,11 @@
-fsocket
+## fsocket
 =======
 
-framed sockets library
+### framed sockets library
 
 It's very young project. With fsocket, you can easily communicate over tcp.
 
-Dependencies:
+## Dependencies:
 libev (for installiatation in ubuntu: `sudo apt-get install libev-dev`)
 
 For installiatation:
