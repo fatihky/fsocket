@@ -23,7 +23,9 @@ First, it has a simple binary protocol. That is just length prefixed stream.<br/
 So you just think based on frames. All buffering jobs done in back.
 
 
-Example server:
+#### Example server:
+> compile with `gcc server.c -o server -lfsocket -lev`
+
 ```c
 
 #include <fsocket/fsocket.h>
@@ -61,7 +63,7 @@ int main()
 
 ```
 
-Example client:
+#### Example client:
 > compile with `gcc client.c -o client -lfsocket -lev`
 
 ```c
