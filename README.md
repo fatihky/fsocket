@@ -18,11 +18,7 @@ If you want to uninstall just run `sudo make uninstall`.
 
 ### What makes it useful?
 First, it has a simple binary protocol. That is just length prefixed stream.<br/>
-|-------------------|<br/>
-| length  |  data   |<br/>
-|-------------------|<br/>
-| 4 bytes | n bytes |<br/>
-|-------------------|
+`[4 bytes length] [n bytes data] ...`
 
 Example server:
 ```c
