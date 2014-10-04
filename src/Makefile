@@ -28,8 +28,12 @@ test: fsocket.o fstream.o anet.o sds.o zmalloc.o
 	gcc test-client.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o test-client -g
 
 install:
-	sudo cp -a fsocket /usr/local/include
-	sudo cp libfsocket.a /usr/lib
+	cp -a fsocket /usr/local/include
+	cp libfsocket.a /usr/lib
+
+uninstall:
+	rm -rf /usr/local/include/fsocket
+	rm /usr/lib/libfsocket.a
 
 clean:
 	rm *.o

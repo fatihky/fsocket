@@ -26,14 +26,12 @@ void on_connect(fsock_cli *c, void *arg)
 
 void on_data(fsock_cli *c, fstream_frame *f, void *arg)
 {
-    //log("server send: %s", f->data);
     received += 1;
     if(received == NUM_REQS)
     {
         long long ms = mstime() - start;
         log("%d requests takes %lld ms", NUM_REQS, ms);
     }
-    log("server send: %s", f->data);
 }
 
 void on_disconnect(fsock_cli *c, void *arg)

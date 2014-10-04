@@ -7,5 +7,8 @@ test:
 install:
 	cd src && make install &&  cd ..
 
+uninstall:
+	cd src && make uninstall &&  cd ..
+
 clean:
 	cd src && make clean &&  cd ..
