@@ -24,10 +24,12 @@ zmalloc.o: zmalloc.c
 	$(CC) zmalloc.c
 
 test: fsocket.o fstream.o anet.o sds.o zmalloc.o
-	gcc test-server.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o test-server -g
-	gcc test-client.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o test-client -g
+	gcc ../examples/test-server.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o ../examples/test-server -g
+	gcc ../examples/test-client.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o ../examples/test-client -g
+	gcc ../examples/server.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o ../examples/server -g
+	gcc ../examples/client.c fsocket.o fstream.o anet.o sds.o zmalloc.o $(LIBS) -o ../examples/client -g
 
-install:
+install: libfsocket
 	cp -a fsocket /usr/local/include
 	cp libfsocket.a /usr/lib
 
@@ -38,5 +40,7 @@ uninstall:
 clean:
 	rm *.o
 	rm libfsocket.a
-	rm test-client
-	rm test-server
+	rm ../examples/test-client
+	rm ../examples/test-server
+	rm ../examples/client
+	rm ../examples/server

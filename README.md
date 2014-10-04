@@ -14,7 +14,8 @@ make
 sudo make install
 ```
 
-If you want to uninstall just run `sudo make uninstall`
+Run `make test` to compile examples.
+If you want to uninstall just run `sudo make uninstall`.
 
 Example server:
 ```c
