@@ -375,7 +375,11 @@ void fsock_conn_on_disconnect(fsock_conn *c, void (*on_disconnect)(fsock_conn *c
     c->on_disconnect_arg = arg;
 }
 
-fsock_srv *fsock_srv_new(EV_P_ char *addr, int port)
+/*
+ * Server
+ */
+
+fsock_srv *fsock_srv_new(EV_P_ const char *addr, int port)
 {
     fsock_srv *s = zmalloc(sizeof(fsock_srv));
 

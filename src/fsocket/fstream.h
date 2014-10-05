@@ -4,6 +4,10 @@
 #include "sds.h"
 #include "zmalloc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
     FSTREAM_PROT_START,
@@ -46,5 +50,9 @@ void fstream_grow_output_buffer(fstream *s, int grow); // grow output buffer
 void fstream_grow_input_buffer(fstream *s, int grow); // grow input buffer's free space
 fstream_err fstream_encode_data(fstream *s, void *data, int len); // encode data to stream
 fstream_err fstream_decode_input(fstream *s, fstream_frame_handler handler, void *arg); // decode stream and iterate over frames
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

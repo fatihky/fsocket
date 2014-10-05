@@ -26,6 +26,8 @@
 #define FSOCK_TCP_INBUF (16 * 1024)
 #define FSOCK_TCP_OBUF (32 * 1024)
 
+EV_CPP(extern "C" {)
+
 typedef struct fsock_srv fsock_srv;
 typedef struct fsock_cli fsock_cli;
 typedef struct rmy_conn fsock_conn;
@@ -86,7 +88,7 @@ struct fsock_srv {
     fstream_encode_data(sock->stream, data, len); \
     _fsock_add_write(sock)
 
-fsock_srv *fsock_srv_new(EV_P_ char *addr, int port);
+fsock_srv *fsock_srv_new(EV_P_ const char *addr, int port);
 void fsock_srv_on_conn(fsock_srv *s, void (*on_conn)(fsock_conn *conn, void *arg), void *arg);
 
 void fsock_conn_destroy(fsock_conn *c);
@@ -98,5 +100,7 @@ void fsock_cli_destroy(fsock_cli *c);
 void fsock_cli_on_connect(fsock_cli *c, void (*fn)(fsock_cli *c, void *data), void *arg);
 void fsock_cli_on_data(fsock_cli *c, void (*on_data)(fsock_cli *c, fstream_frame *f, void *arg), void *arg);
 void fsock_cli_on_disconnect(fsock_cli *c, void (*on_disconnect)(fsock_cli *c, void *arg), void *arg);
+
+EV_CPP(})
 
 #endif
