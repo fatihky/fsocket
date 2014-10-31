@@ -107,3 +107,6 @@ int main(int argc, char *argv[])
 ### Bindings
 * node.js:
     * [fsocket.js](https://github.com/fatihky/fsocket.js)
+
+### Licence
+![](https://raw.githubusercontent.com/fatihky/fsocket/master/licence.jpg)
