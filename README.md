@@ -108,5 +108,5 @@ int main(int argc, char *argv[])
 * node.js:
     * [fsocket.js](https://github.com/fatihky/fsocket.js)
 
-### Licence
+### Licence: `no`
 ![](https://cloud.githubusercontent.com/assets/4169772/4864685/466ebb02-611e-11e4-829c-8dbca79aa7ec.jpg)
