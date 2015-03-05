@@ -1,33 +1,33 @@
 #include <stdio.h>
-#include <fsocket/fsocket.h>
+#include <fsocket.h>
 
-void on_data(fsock_conn *c, fstream_frame *f, void *arg)
+void on_conn(fsock_t *self, fsock_t *conn);
+void on_disconnect(fsock_t *self, fsock_t *conn);
+void on_frame(fsock_t *self, fsock_t *conn, fsock_frame_t *frame);
+
+int main(int argc, char *argv[])
 {
-    fsock_send(c, "pong", 4);
+  EV_P = ev_loop_new(0);
+  fsock_t *server = fsock_bind(EV_A_ "127.0.0.1", 9123);
+  fsock_on_conn(server, on_conn);
+  fsock_on_disconnect(server, on_disconnect);
+  fsock_on_frame(server, on_frame);
+
+  ev_run(EV_A_ 0);
+  return 0;
 }
 
-void on_disconnect(fsock_conn *c, void *arg)
+void on_conn(fsock_t *self, fsock_t *conn)
 {
-    printf("client disconnected\n");
+  printf("new conn\n");
 }
 
-void on_conn(fsock_conn *c, void *arg)
+void on_disconnect(fsock_t *self, fsock_t *conn)
 {
-    printf("new client connected on %s:%d\n", c->ip, c->port);
-
-    fsock_conn_on_data(c, on_data, NULL);
-    fsock_conn_on_disconnect(c, on_disconnect, NULL);
+	printf("user disconnected\n");
 }
 
-int main()
+void on_frame(fsock_t *self, fsock_t *conn, fsock_frame_t *frame)
 {
-    EV_P = ev_loop_new(0);
-
-    fsock_srv *srv = fsock_srv_new(EV_A_ "127.0.0.1", 9123);
-    fsock_srv_on_conn(srv, on_conn, NULL);
-
-    printf("server started on %s:%d (fd: %d)\n", srv->addr, srv->port, srv->fd);
-
-    ev_run(EV_A_ 0);
-    return 0;
+  fsock_send(conn, (void *)"pong", 4);
 }

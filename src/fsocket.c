@@ -1,410 +1,357 @@
-#include <unistd.h>     /* Symbolic Constants */
-#include <sys/types.h>  /* Primitive System Data Types */ 
-#include <errno.h>      /* Errors */
-#include <stdio.h>      /* Input/Output */
-#include <stdlib.h>     /* General Utilities */
-#include <string.h>     /* String handling */
-#include <errno.h>
 #include "fsocket.h"
-#include "anet.h"
-#include "../debug.h"
+#include "fs_internal.h"
+#include "io_handlers.h"
 
+// int fsock_is_inited = false;
+// fsock_thread reader_thread;
+int fsock_is_inited = false;
+fsock_thread reader_thread;
+ev_io *io__ = NULL;
 
-#define FSOCK_TCP_INBUF (16 * 1024)
+fsock_main_thread main_thread = {
+	.loop = NULL,
+	.num_socks = 0
+};
 
-#define FSOCK_TCP_INBUF (16 * 1024)
+// main_thread.loop = NULL;
+// main_thread.num_socks = 0;
 
-static fsock_conn *fsock_conn_new(fsock_srv *s, int fd, char *ip, int port);
+static void fsock_initialize();
 
-static void _srv_frame_handler(fstream_frame *f, void *arg)
+// reader thread async watchers
+static void reader_thread_in_async_cb(EV_P_ struct ev_io *a, int revents)
 {
-    fsock_conn *c = (fsock_conn *)arg;
-    if(c->on_data)
-        c->on_data(c, f, c->on_data_arg);
-}
+	(void)a;
+	(void)revents;
 
-static void _cli_frame_handler(fstream_frame *f, void *arg)
-{
-    fsock_cli *c = (fsock_cli *)arg;
-    if(c->on_data)
-        c->on_data(c, f, c->on_data_arg);
-}
-
-static void _srv_read_cb(EV_P_ struct ev_io *r, int revents)
-{
-    fsock_conn *c = (fsock_conn *)r->data;
-
-    int sz = FSOCK_TCP_INBUF;
-	int bytes = 0;
-
-    if(sz < fstream_must_read(c->stream))
-        sz = fstream_must_read(c->stream);
-
-	char *p = fstream_prepare_to_read(c->stream, sz);
-
-	bytes = read(c->fd, p, sz);
-
-    fstream_data_readed(c->stream, bytes);
-
-    if (bytes == 0)
-    {
-        // connection closed
-        fsock_conn_destroy(c);
-        return;
-    } else if (bytes == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-        {
-            // no data
-            // continue to wait for recv
-            //log("no data, continue to wait for recv");
-            return;
-        } else {
-            // error at server recv
-            fsock_conn_destroy(c);
-            return;
-        }
-    }
-
-    //log("%d bytes received", bytes);
-
-    fstream_decode_input(c->stream, _srv_frame_handler, c);
-
-	_fsock_add_write(c);
-}
-
-static void _srv_write_cb(EV_P_ struct ev_io *w, int revents)
-{
-    fsock_conn *c = (fsock_conn *)w->data;
-
-	if(fstream_output_size(c->stream) == 0)
+	fsock_t *sock = (fsock_t *)queue_pop_left(reader_thread.in_queue);
+	while(sock != NULL)
 	{
-		// if all data transfered to client, stop write event
-		_fsock_del_write(c);
-		return;
-	}
+		fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+		ev_io *io = &_prv->ior;
+		io->data = (void *)sock;
 
-	int bytes, len;
-
-    char *p = fstream_prepare_to_write(c->stream, &len);
-    if(p == NULL)
-    {
-        _fsock_del_write(c);
-        return;
-    }
-
-    bytes = write(c->fd, p, len);
-
-	if (bytes < 0) {
-		if ((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
-			(errno == EINTR)) {
-			/* do nothing, try again. */
-
-			//log("do nothing, try again");
-		} else {
-			// TODO: what I must do in here?
-			fsock_conn_destroy(c);
-			return;
+		ev_io_init(io, io_read, _prv->fd, EV_READ);
+		io->next = (struct ev_watcher_list *)io;
+		if(__sync_bool_compare_and_swap(&_prv->is_reading, 0, 1))
+		{
+			ev_io_start(EV_A_ io);
 		}
-	} else if(bytes > 0) {
-	    //log("%d bytes written", bytes);
-	    fstream_data_written(c->stream, bytes);
-		if (fstream_output_size(c->stream) == 0) {
-
-		} else {
-			// TODO: what I must do in here?
-			return;
-		}
-	} else if(bytes > 0) {
-	    fstream_data_written(c->stream, bytes);
-		if (bytes == fstream_output_size(c->stream)) {
-			_fsock_del_write(c); // and, stop write event of course
-		} else {
-		}
+		sock = (fsock_t *)queue_pop_left(reader_thread.in_queue);
 	}
 }
 
-
-static int __cli_handle_connect(fsock_cli *c)
+static void reader_thread_o_async_cb(EV_P_ struct ev_io *a, int revents)
 {
-    c->flags |= FSOCK_CONNECTED; // mark as connected
-    if(c->on_connect)
-        c->on_connect(c, c->on_connect_arg);
-    return FSOCK_OK;
-}
+	(void)a;
+	(void)revents;
 
-void _cli_read_cb(EV_P_ struct ev_io *r, int revents)
-{
-    fsock_cli *c = (fsock_cli *)r->data;
-
-    // I copied this from hiredis
-    if (!(c->flags & FSOCK_CONNECTED))
-    {
-        /* Abort connect was not successful. */
-        if (__cli_handle_connect(c) != FSOCK_OK)
-            return;
-        /* Try again later when the context is still not connected. */
-        if (!(c->flags & FSOCK_CONNECTED))
-            return;
-    }
-
-    int sz = FSOCK_TCP_INBUF;
-	int bytes = 0;
-
-    if(sz < fstream_must_read(c->stream))
-        sz = fstream_must_read(c->stream);
-
-	char *p = fstream_prepare_to_read(c->stream, sz);
-
-	bytes = read(c->fd, p, sz);
-
-    fstream_data_readed(c->stream, bytes);
-
-    if (bytes == 0)
-    {
-        // connection closed
-        fsock_cli_destroy(c);
-        return;
-    } else if (bytes == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-        {
-            // no data
-            // continue to wait for recv
-            return;
-        } else {
-            // error at server recv
-            fsock_cli_destroy(c);
-            return;
-        }
-    }
-
-    fstream_decode_input(c->stream, _cli_frame_handler, c);
-
-	_fsock_add_write(c);
-}
-
-void _cli_write_cb(EV_P_ struct ev_io *w, int revents)
-{
-    fsock_cli *c = (fsock_cli *)w->data;
-
-	if(fstream_output_size(c->stream) == 0)
+	fsock_t *sock = (fsock_t *)queue_pop_left(reader_thread.o_queue);
+	while(sock != NULL)
 	{
-		// if all data transfered to client, stop write event
-		_fsock_del_write(c);
-		return;
-	}
-
-	int bytes, len;
-
-    char *p = fstream_prepare_to_write(c->stream, &len);
-    if(p == NULL)
-    {
-        _fsock_del_write(c);
-        return;
-    }
-
-    bytes = write(c->fd, p, len);
-
-	if (bytes < 0) {
-		if ((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
-			(errno == EINTR)) {
-			/* do nothing, try again. */
-		} else {
-			// TODO: what I must do in here?
-			fsock_cli_destroy(c);
-			return;
+		fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+		ev_io *io = &_prv->iow;
+		if(__sync_bool_compare_and_swap(&_prv->is_writing, 0, 1))
+		{
+			ev_io_start(loop, io);
 		}
-	} else if(bytes > 0) {
-	    fstream_data_written(c->stream, bytes);
-		if (fstream_output_size(c->stream) == 0) {
-			_fsock_del_write(c); // and, stop write event of course
-		} else {
-		}
-	} else if(bytes == 0) {
-		return;
+		sock = (fsock_t *)queue_pop_left(reader_thread.o_queue);
 	}
 }
 
-static void _srv_accept_cb(EV_P_ struct ev_io *a, int revents)
+static void reader_thread_close_async_cb(EV_P_ struct ev_async *a, int revents)
 {
-    fsock_srv *s = (fsock_srv *)a->data;
-	int port;
-	char ip[256];
-	int fd = anetTcpAccept(NULL, a->fd, ip, 256, &port);
-	anetNonBlock(NULL, fd);
-	anetEnableTcpNoDelay(NULL, fd);
+	(void)a;
+	(void)revents;
+	fsock_t *sock = (fsock_t *)queue_pop_left(reader_thread.close_queue);
+	while(sock != NULL)
+	{
+		fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+		if(_prv->is_writing)
+			ev_io_stop(EV_A_ &_prv->iow);
 
-    fsock_conn *c = fsock_conn_new(s, fd, ip, port);
+		if(_prv->is_reading)
+			ev_io_stop(EV_A_ &_prv->ior);
 
-    if(s->on_conn)
-        s->on_conn(c, s->on_conn_arg);
+		close(_prv->fd);
 
-    // register event handler to server loop
-	_fsock_add_read(c);
+		// add connection to reader thread's queue
+		queue_push_right(main_thread.disconnect_queue, (void *)sock);
+		// fire reader thread
+		ev_async_send(main_thread.loop, &main_thread.disconnect_async);
+
+		sock = (fsock_t *)queue_pop_left(reader_thread.close_queue);
+	}
+}
+
+static void main_thread_disconnect_async_cb(EV_P_ struct ev_io *a, int revents)
+{
+	(void)a;
+	(void)revents;
+	(void)loop;
+
+	fsock_t *sock = (fsock_t *)queue_pop_left(main_thread.disconnect_queue);
+	while(sock != NULL)
+	{
+		fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+		if(sock->type == FSOCK_CONN)
+		{
+			fsock_internal_t *srv_prv = (fsock_internal_t *)_prv->srv->_prv;
+			if(srv_prv->on_disconnect)
+				srv_prv->on_disconnect(_prv->srv, sock);
+		} else if(_prv->on_disconnect)
+			_prv->on_disconnect(sock, NULL);
+
+		// free memory
+		zfree(_prv->addr);
+		zfree(_prv);
+		zfree(sock);
+		fsock_decr_sock_count();
+		sock = (fsock_t *)queue_pop_left(main_thread.disconnect_queue);
+	}
+}
+
+static void main_thread_frame_async_cb(EV_P_ struct ev_io *a, int revents)
+{
+	(void)loop;
+	(void)a;
+	(void)revents;
+	uint32_t i;
+	uint32_t count = queue_count(main_thread.frame_queue);
+	// FSOCK_LOG("there are %d elements in 'in_queue'", count);
+	if(count == 0)
+		return;
+
+	for(i = 0; i < count; i++)
+	{
+		fsock_frame_queue_item_t *q_item = (fsock_frame_queue_item_t *)queue_pop_left(main_thread.frame_queue);
+		fsock_t *sock = q_item->receiver;
+		fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+		if(_prv->on_frame)
+			_prv->on_frame(q_item->receiver, q_item->sender, q_item->frame);
+		zfree(q_item);
+	}
+}
+
+static void reader_thread_async_cb(struct ev_loop *loop, struct ev_io *a, int revents)
+{
+	(void)loop;
+	(void)a;
+	(void)revents;
+	// FSOCK_LOG("reader_thread_async_cb: async event fired");
+}
+
+static void async_noop(struct ev_loop *loop, struct ev_io *a, int revents)
+{
+	(void)loop;
+	(void)a;
+	(void)revents;
+	// FSOCK_LOG("reader_thread_async_cb: async event fired");
+}
+
+// reader thread
+static void *fsock_reader_thread(void *arg)
+{
+	(void)arg;
+	// FSOCK_LOG("fsock_reader_thread");
+	// start loop
+	uint32_t count = queue_count(reader_thread.o_queue);
+	if(count > 0)
+		ev_async_start(reader_thread.loop, &reader_thread.o_async);
+	ev_run(reader_thread.loop, 0);
+	return NULL;
+}
+
+static void fsock_initialize()
+{
+	if(fsock_is_inited == true)
+		return;
+	fsock_is_inited = true;
+
+	// initialize reader thread's variables
+	reader_thread.loop = ev_loop_new(0);
+	reader_thread.in_queue = queue_create();
+	reader_thread.o_queue = queue_create();
+	reader_thread.close_queue = queue_create();
+	// initialize disconnect queue
+	main_thread.disconnect_queue = queue_create();
+	// initialize frame queue
+	main_thread.frame_queue = queue_create();
+
+	// initialize async watchers
+	ev_async *async = &reader_thread.async;
+	ev_async_init(async, reader_thread_async_cb);
+	ev_async_start(reader_thread.loop, async);
+
+	async = &reader_thread.in_async;
+	ev_async_init(async, reader_thread_in_async_cb);
+	ev_async_start(reader_thread.loop, async);
+
+	async = &reader_thread.o_async;
+	ev_async_init(async, reader_thread_o_async_cb);
+	ev_async_start(reader_thread.loop, async);
+
+	async = &reader_thread.close_async;
+	ev_async_init(async, reader_thread_close_async_cb);
+	ev_async_start(reader_thread.loop, async);
+
+	// start disconnect handler
+	async = &main_thread.disconnect_async;
+	ev_async_init(async, main_thread_disconnect_async_cb);
+	ev_async_start(main_thread.loop, async);
+
+	// start frame handler
+	async = &main_thread.frame_async;
+	ev_async_init(async, main_thread_frame_async_cb);
+	ev_async_start(main_thread.loop, async);
+
+	// start awake async handler
+	async = &main_thread.awake;
+	ev_async_init(async, async_noop);
+	ev_async_start(main_thread.loop, async);
+
+	// start thread
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_create(&reader_thread.thread, &attr, fsock_reader_thread, NULL);
+}
+
+fsock_t *fsock_new()
+{
+	fsock_initialize();
+	fsock_t *sock = zmalloc(sizeof(fsock_t));
+	fsock_internal_t *_prv = zmalloc(sizeof(fsock_internal_t));
+	memset(sock, '\0', sizeof(fsock_t));
+	memset(_prv, '\0', sizeof(fsock_internal_t));
+	sock->_prv = _prv;
+	_prv->in_buf = sdsempty();
+	_prv->o_buf = sdsempty();
+	return sock;
+}
+
+fsock_t *fsock_bind(EV_P_ char *addr, int port)
+{
+	if(main_thread.loop == NULL)
+		main_thread.loop = loop;
+	else {
+		assert(main_thread.loop == loop);
+	}
+
+	fsock_t *sock = fsock_new();
+	fsock_internal_t *_prv = sock->_prv;
+	sock->type = FSOCK_SERVER;
+
+	char err[256] = "\0";
+	int fd = anetTcpServer(err, port, addr, 1024);
+
+	_prv->loop = loop;
+	_prv->fd = fd;
+
+	// initialize accept event
+	ev_io *io = &_prv->ioa;
+	io->data = (void *)sock;
+
+	// start accept event
+	ev_io_init(io, io_accept, fd, EV_READ);
+	ev_io_start(EV_A_ io); // accept new connections from main event loop
+
+	// increment sockets count
+	fsock_incr_sock_count();
+
+	return sock;
+}
+
+fsock_t *fsock_connect(EV_P_ char *addr, int port)
+{
+	if(main_thread.loop == NULL)
+		main_thread.loop = loop;
+	else {
+		assert(main_thread.loop == loop);
+	}
+
+	fsock_t *sock = fsock_new();
+	fsock_internal_t *_prv = sock->_prv;
+	sock->type = FSOCK_CLI;
+
+	char err[256] = "\0";
+	int fd = anetTcpNonBlockConnect(err, addr, port);
+
+	_prv->loop = loop;
+	_prv->fd = fd;
+	_prv->addr = zstrdup(addr);
+	_prv->port = port;
+	_prv->o_lock.val = 1;
+	_prv->is_connected = 0;
+	_prv->is_write_event_fired = 0;
+	_prv->is_reading = 0;
+	_prv->is_writing = 0;
+
+	// initialize write event
+	ev_io *io = &_prv->iow;
+	io->data = (void *)sock;
+	ev_io_init(io, io_write, fd, EV_WRITE);
+
+	// add connection to reader thread's queue
+	queue_push_right(reader_thread.in_queue, (void *)sock);
+	// fire reader thread
+	ev_async_send(reader_thread.loop, &reader_thread.in_async);
+
+	// increment sockets count
+	fsock_incr_sock_count();
+	return sock;
+}
+
+void fsock_destroy(fsock_t *sock)
+{
+	// add connection to reader thread's queue
+	queue_push_right(reader_thread.close_queue, (void *)sock);
+	// fire reader thread
+	ev_async_send(reader_thread.loop, &reader_thread.close_async);
+}
+
+void fsock_send(fsock_t *sock, void *data, uint32_t size)
+{
+	fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+
+	// encode data
+	uint32_t len = size;
+	size_t avail = sdsavail(_prv->o_buf);
+	size_t raw_len = size + 4;
+	
+	light_lock(&_prv->o_lock);
+	if(avail < raw_len)
+	{
+		_prv->o_buf = sdsMakeRoomFor(_prv->o_buf, raw_len);
+	}
+	_prv->o_buf = sdscatlen(_prv->o_buf, &len, 4);
+	_prv->o_buf = sdscatlen(_prv->o_buf, data, len);
+	light_unlock(&_prv->o_lock);
+
+	if(__sync_bool_compare_and_swap(&_prv->is_write_event_fired, 0, 1))
+	{
+		queue_push_right(reader_thread.o_queue, (void *)sock);
+		ev_async_send(reader_thread.loop, &reader_thread.o_async);
+	}
 }
 
 /*
- * Client
+ * set callbacks
  */
-
-void _cli_async_cb (struct ev_loop *loop, struct ev_io *a, int revents)
+void fsock_on_conn(fsock_t *self, fsock_conn_handler_t handler)
 {
-    printf("%s:%d: triggered", __func__, __LINE__);
+	fsock_internal_t *_prv = (fsock_internal_t *)self->_prv;
+	_prv->on_conn = handler;
 }
 
-fsock_cli *fsock_cli_new(EV_P_ char *host, int port)
+void fsock_on_frame(fsock_t *self, fsock_frame_handler_t handler)
 {
-    char err[256] = "\0";
-    int fd = anetTcpNonBlockConnect(err, host, port);
-    fsock_cli *c = zmalloc(sizeof(fsock_cli));
-    c->loop = EV_A;
-    c->flags = 0;
-    c->fd = fd;
-    c->host = zstrdup(host);
-    c->port = port;
-    ev_io *io = &c->ior; 
-    ev_io_init(io, _cli_read_cb, fd, EV_READ);
-    io = &c->iow;
-    ev_io_init(io, _cli_write_cb, fd, EV_WRITE);
-    c->ior.data = c;
-    c->iow.data = c;
-    c->is_reading = 0;
-    c->is_writing = 0;
-    c->stream = fstream_new();
-    c->on_connect = NULL;
-    c->on_data = NULL;
-    c->on_disconnect = NULL;
-    c->on_connect_arg = NULL;
-    c->on_data_arg = NULL;
-    c->on_disconnect_arg = NULL;
-    ev_async *async = &c->async;
-    ev_async_init(async, _cli_async_cb);
-    ev_async_start(EV_A_ async);
-    _fsock_add_read(c);
-    return c;
+	fsock_internal_t *_prv = (fsock_internal_t *)self->_prv;
+	_prv->on_frame = handler;
 }
 
-void fsock_cli_destroy(fsock_cli *c)
+void fsock_on_disconnect(fsock_t *self, fsock_conn_handler_t handler)
 {
-    if(c->on_disconnect)
-        c->on_disconnect(c, c->on_disconnect_arg);
-
-    _fsock_del_read(c);
-    _fsock_del_write(c);
-    ev_async *async = &c->async;
-    ev_async_stop(c->loop, async);
-    
-    close(c->fd);
-
-    fstream_free(c->stream);
-    zfree(c->host);
-    zfree(c);
-}
-
-void fsock_cli_on_connect(fsock_cli *c, void (*on_connect)(fsock_cli *c, void *data), void *arg)
-{
-    c->on_connect = on_connect;
-    c->on_connect_arg = arg;
-}
-
-void fsock_cli_on_data(fsock_cli *c, void (*on_data)(fsock_cli *c, fstream_frame *f, void *arg), void *arg)
-{
-    c->on_data = on_data;
-    c->on_data_arg = arg;
-}
-
-void fsock_cli_on_disconnect(fsock_cli *c, void (*on_disconnect)(fsock_cli *c, void *arg), void *arg)
-{
-    c->on_disconnect = on_disconnect;
-    c->on_disconnect_arg = arg;
-}
-
-/*
- * Connection
- */
-
-fsock_conn *fsock_conn_new(fsock_srv *s, int fd, char *ip, int port)
-{
-    fsock_conn *c = zmalloc(sizeof(fsock_conn));
-    c->loop = s->loop;
-    c->srv = s;
-    c->fd = fd;
-    c->ip = zstrdup(ip);
-    c->port = port;
-    c->data = NULL;
-    ev_io *io = &c->ior;
-    ev_io_init(io, _srv_read_cb, fd, EV_READ);
-    io = &c->iow;
-    ev_io_init(io, _srv_write_cb, fd, EV_WRITE);
-    c->ior.data = c;
-    c->iow.data = c;
-    c->is_reading = 0;
-    c->is_writing = 0;
-    c->stream = fstream_new();
-
-    c->on_data = NULL;
-    c->on_disconnect = NULL;
-    c->on_data_arg = NULL;
-    c->on_disconnect_arg = NULL;
-    return c;
-}
-
-void fsock_conn_destroy(fsock_conn *c)
-{
-    if(c->on_disconnect)
-        c->on_disconnect(c, c->on_disconnect_arg);
-
-    _fsock_del_read(c);
-    _fsock_del_write(c);
-    
-    close(c->fd);
-
-    fstream_free(c->stream);
-    zfree(c->ip);
-    zfree(c);
-}
-
-void fsock_conn_on_data(fsock_conn *c, void (*on_data)(fsock_conn *c, fstream_frame *f, void *arg), void *arg)
-{
-    c->on_data = on_data;
-    c->on_data_arg = arg;
-}
-
-void fsock_conn_on_disconnect(fsock_conn *c, void (*on_disconnect)(fsock_conn *c, void *arg), void *arg)
-{
-    c->on_disconnect = on_disconnect;
-    c->on_disconnect_arg = arg;
-}
-
-/*
- * Server
- */
-
-fsock_srv *fsock_srv_new(EV_P_ const char *addr, int port)
-{
-    fsock_srv *s = zmalloc(sizeof(fsock_srv));
-
-    char err[256] = "\0";
-    int fd = anetTcpServer(err, 9123, "127.0.0.1", 1024);
-
-    s->loop = EV_A;
-    s->fd = fd;
-    s->addr = zstrdup(addr);
-    s->port = port;
-    s->on_conn = NULL;
-
-    s->on_conn_arg = NULL;
-
-    ev_io *io = &s->ioa;
-    io->data = s;
-
-	ev_io_init(io, _srv_accept_cb, fd, EV_READ);
-	ev_io_start(EV_A_ io);
-
-	return s;
-}
-
-void fsock_srv_on_conn(fsock_srv *s, void (*on_conn)(fsock_conn *conn, void *arg), void *arg)
-{
-    s->on_conn = on_conn;
-    s->on_conn_arg = arg;
+	fsock_internal_t *_prv = (fsock_internal_t *)self->_prv;
+	_prv->on_disconnect = handler;
 }

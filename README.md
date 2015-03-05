@@ -6,6 +6,7 @@ It's very young project. With fsocket, you can easily communicate over tcp.
 
 ### Dependencies:
 libev (for installiatation in ubuntu: `sudo apt-get install libev-dev`)
+[libhl](https://github.com/xant/libhl)
 
 For installiatation:
 ```sh
@@ -24,84 +25,83 @@ So you just think based on frames. All buffering jobs done in back.
 
 
 #### Example server:
-> compile with `gcc server.c -o server -lfsocket -lev`
+> compile with `gcc server.c -o server -lfsocket -lev -lhl -lpthread`
 
 ```c
-
-#include <fsocket/fsocket.h>
-
-void on_data(fsock_conn *c, fstream_frame *f, void *arg)
-{
-    fsock_send(c, "pong", 4);
-}
-
-void on_disconnect(fsock_conn *c, void *arg)
-{
-    printf("client disconnected\n");
-}
-
-void on_conn(fsock_conn *c, void *arg)
-{
-    printf("new client connected on %s:%d\n", c->ip, c->port);
-
-    fsock_conn_on_data(c, on_data, NULL);
-    fsock_conn_on_disconnect(c, on_disconnect, NULL);
-}
-
-int main()
-{
-    EV_P = ev_loop_new(0);
-
-    fsock_srv *srv = fsock_srv_new(EV_A_ "127.0.0.1", 9123);
-    fsock_srv_on_conn(srv, on_conn, NULL);
-
-    printf("server started on %s:%d (fd: %d)\n", srv->addr, srv->port, srv->fd);
-
-    ev_run(EV_A_ 0);
-    return 0;
-}
-
-```
-
-#### Example client:
-> compile with `gcc client.c -o client -lfsocket -lev`
-
-```c
-
 #include <stdio.h>
-#include <fsocket/fsocket.h>
+#include <fsocket.h>
 
-void on_connect(fsock_cli *c, void *arg)
-{
-    printf("client connected to %s:%d (fd: %d)\n", c->host, c->port, c->fd);
-}
-
-void on_data(fsock_cli *c, fstream_frame *f, void *arg)
-{
-    // make some things with data
-    printf("received: %s\n", f->data);
-}
-
-void on_disconnect(fsock_cli *c, void *arg)
-{
-    printf("server connection closed\n");
-}
+void on_conn(fsock_t *self, fsock_t *conn);
+void on_disconnect(fsock_t *self, fsock_t *conn);
+void on_frame(fsock_t *self, fsock_t *conn, fsock_frame_t *frame);
 
 int main(int argc, char *argv[])
 {
-    EV_P = ev_loop_new(0);
+  EV_P = ev_loop_new(0);
+  fsock_t *server = fsock_bind(EV_A_ "127.0.0.1", 9123);
+  fsock_on_conn(server, on_conn);
+  fsock_on_disconnect(server, on_disconnect);
+  fsock_on_frame(server, on_frame);
 
-    fsock_cli *cli = fsock_cli_new(EV_A_ "127.0.0.1", 9123);
-    fsock_cli_on_connect(cli, on_connect, NULL);
-    fsock_cli_on_data(cli, on_data, NULL);
-    fsock_cli_on_disconnect(cli, on_disconnect, NULL);
-
-    fsock_send(cli, "ping", 4);
-
-    ev_run(EV_A_ 0);
-    return 0;
+  ev_run(EV_A_ 0);
+  return 0;
 }
 
+void on_conn(fsock_t *self, fsock_t *conn)
+{
+  printf("new conn\n");
+}
+
+void on_disconnect(fsock_t *self, fsock_t *conn)
+{
+	printf("user disconnected\n");
+}
+
+void on_frame(fsock_t *self, fsock_t *conn, fsock_frame_t *frame)
+{
+  fsock_send(conn, (void *)"pong", 4);
+}
+```
+
+#### Example client:
+> compile with `gcc client.c -o client -lfsocket -lev -lhl -lpthread`
+
+```c
+#include <stdio.h>
+#include <fsocket.h>
+
+void on_conn(fsock_t *self, fsock_t *conn);
+void on_disconnect(fsock_t *self, fsock_t *conn);
+void on_frame(fsock_t *self, fsock_t *conn, fsock_frame_t *frame);
+
+int main(int argc, char *argv[])
+{
+  EV_P = ev_loop_new(0);
+  fsock_t *client = fsock_connect(EV_A_ "127.0.0.1", 9123);
+  fsock_on_conn(client, on_conn);
+  fsock_on_disconnect(client, on_disconnect);
+  fsock_on_frame(client, on_frame);
+
+  fsock_send(client, (void *)"ping", 4);
+
+  ev_run(EV_A_ 0);
+  return 0;
+}
+
+void on_conn(fsock_t *self, fsock_t *conn)
+{
+  printf("connected to the server\n");
+}
+
+void on_disconnect(fsock_t *self, fsock_t *conn)
+{
+  printf("server connection closed\n");
+}
+
+void on_frame(fsock_t *self, fsock_t *conn, fsock_frame_t *frame)
+{
+  printf("new frame: %s\n", (char *)frame->data);
+}
 ```
 
 ### Bindings
