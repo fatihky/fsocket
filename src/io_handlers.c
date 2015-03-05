@@ -51,20 +51,6 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 	(void)revents;
 	fsock_t *sock = (fsock_t *)r->data;
 	fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
-	/*fsock_t *srv = NULL;
-
-	if(sock->type == FSOCK_CONN)
-		srv = _prv->srv;*/
-
-	if(sock->type == FSOCK_CONN)
-	{
-		// FSOCK_LOG("tip: FSOCK_CONN");
-	}
-
-	if(sock->type == FSOCK_SERVER)
-	{
-		// FSOCK_LOG("tip: FSOCK_SERVER");
-	}
 
 	if(sock->type == FSOCK_CLI)
 	{
@@ -74,7 +60,6 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 				_prv->on_conn(sock, NULL);
 			_prv->is_connected = 1;
 		}
-		// FSOCK_LOG("tip: FSOCK_CLI");
 	}
 
 	uint32_t sz = FSOCK_TCP_INBUF;
@@ -104,7 +89,6 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 			// connection closed
 			if(__sync_bool_compare_and_swap(&_prv->is_connected, 1, 0))
 			{
-				FSOCK_LOG("[TODO: handle disconnect] connection closed");
 				// add connection to reader thread's queue
 				queue_push_right(main_thread.disconnect_queue, (void *)sock);
 				// fire reader thread
@@ -135,10 +119,8 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 		{
 			case FSOCK_PROT_START:
 			{
-				// FSOCK_LOG("case FSOCK_PROT_START");
 				if(not_parsed < 4) // wait for more data
 				{
-					// FSOCK_LOG("not_parsed < 4");
 					return; // FSTREAM_OK;
 				}
 				memcpy(&f->size, p, 4);
@@ -176,8 +158,6 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 
 				ev_async_send(main_thread.loop, &main_thread.frame_async);
 
-				// FSOCK_LOG("frame parsed .. %u %s", f->size, (char *)f->data);
-
 				p += f->size;
 				not_parsed -= f->size;
 				_prv->parser.state = FSOCK_PROT_START; // return to start
@@ -194,7 +174,6 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 			break;
 	}
 
-	// FSOCK_LOG("readed data: %s %zu", start, sdslen(_prv->in_buf));
 }
 
 void io_write(EV_P_ struct ev_io *w, int revents)
@@ -224,14 +203,9 @@ void io_write(EV_P_ struct ev_io *w, int revents)
 			(errno == EINTR)) {
 			/* do nothing, try again. */
 		} else {
-			// TODO: what I must do in here?
-			FSOCK_LOG("TODO: destroy fsocket instance");
-			// fsock_cli_destroy(c);
-			// add connection to reader thread's queue
 			queue_push_right(main_thread.disconnect_queue, (void *)sock);
 			// fire reader thread
 			ev_async_send(main_thread.loop, &main_thread.disconnect_async);
-			// return;
 		}
 	} else if(bytes > 0) {
 		if(bytes == (int)sdslen(_prv->o_buf))

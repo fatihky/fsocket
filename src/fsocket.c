@@ -2,8 +2,6 @@
 #include "fs_internal.h"
 #include "io_handlers.h"
 
-// int fsock_is_inited = false;
-// fsock_thread reader_thread;
 int fsock_is_inited = false;
 fsock_thread reader_thread;
 ev_io *io__ = NULL;
@@ -12,9 +10,6 @@ fsock_main_thread main_thread = {
 	.loop = NULL,
 	.num_socks = 0
 };
-
-// main_thread.loop = NULL;
-// main_thread.num_socks = 0;
 
 static void fsock_initialize();
 
@@ -118,7 +113,7 @@ static void main_thread_frame_async_cb(EV_P_ struct ev_io *a, int revents)
 	(void)revents;
 	uint32_t i;
 	uint32_t count = queue_count(main_thread.frame_queue);
-	// FSOCK_LOG("there are %d elements in 'in_queue'", count);
+
 	if(count == 0)
 		return;
 
@@ -138,7 +133,6 @@ static void reader_thread_async_cb(struct ev_loop *loop, struct ev_io *a, int re
 	(void)loop;
 	(void)a;
 	(void)revents;
-	// FSOCK_LOG("reader_thread_async_cb: async event fired");
 }
 
 static void async_noop(struct ev_loop *loop, struct ev_io *a, int revents)
@@ -146,15 +140,12 @@ static void async_noop(struct ev_loop *loop, struct ev_io *a, int revents)
 	(void)loop;
 	(void)a;
 	(void)revents;
-	// FSOCK_LOG("reader_thread_async_cb: async event fired");
 }
 
 // reader thread
 static void *fsock_reader_thread(void *arg)
 {
 	(void)arg;
-	// FSOCK_LOG("fsock_reader_thread");
-	// start loop
 	uint32_t count = queue_count(reader_thread.o_queue);
 	if(count > 0)
 		ev_async_start(reader_thread.loop, &reader_thread.o_async);

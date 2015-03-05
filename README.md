@@ -4,9 +4,13 @@
 
 It's very young project. With fsocket, you can easily communicate over tcp.
 
+### api
+fsocket has a very simple api. You can see at [fsocket.h](https://github.com/fatihky/fsocket/blob/master/include/fsocket.h)
+
 ### Dependencies:
 libev (for installiatation in ubuntu: `sudo apt-get install libev-dev`)
 [libhl](https://github.com/xant/libhl)
+pthread
 
 For installiatation:
 ```sh
