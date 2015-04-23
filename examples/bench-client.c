@@ -1,4 +1,5 @@
-#include "fsocket/fsocket.h"
+#include <sys/time.h>
+#include "fsocket.h"
 #include "debug.h"
 
 static long long ustime(void) {
@@ -19,42 +20,42 @@ long long start = 0;
 int received = 0;
 int NUM_REQS = 1000;
 
-void on_connect(fsock_cli *c, void *arg)
+void on_connect(fsock_t *self, fsock_t *conn)
 {
-    log("client connected to %s:%d (fd: %d)", c->host, c->port, c->fd);
+    FSOCK_LOG("client connected to server");
 }
 
-void on_data(fsock_cli *c, fstream_frame *f, void *arg)
+void on_data(fsock_t *self, fsock_t *conn, fsock_frame_t *f)
 {
     received += 1;
     if(received == NUM_REQS)
     {
         long long ms = mstime() - start;
-        log("%d requests takes %lld ms", NUM_REQS, ms);
+        FSOCK_LOG("%d requests takes %lld ms", NUM_REQS, ms);
     }
 }
 
-void on_disconnect(fsock_cli *c, void *arg)
+void on_disconnect(fsock_t *self, fsock_t *conn)
 {
-    log("server disconnected");
+    FSOCK_LOG("server disconnected");
 }
 
 int main(int argc, char *argv[])
 {
     EV_P = ev_loop_new(0);
 
-    fsock_cli *cli = fsock_cli_new(EV_A_ "127.0.0.1", 9123);
-    fsock_cli_on_connect(cli, on_connect, NULL);
-    fsock_cli_on_data(cli, on_data, NULL);
-    fsock_cli_on_disconnect(cli, on_disconnect, NULL);
+    fsock_t *cli = fsock_connect(EV_A_ "127.0.0.1", 9123);
+    fsock_on_conn(cli, on_connect);
+    fsock_on_frame(cli, on_data);
+    fsock_on_disconnect(cli, on_disconnect);
 
     if(argc == 2 && atoi(argv[1]) != -1)
     {
         NUM_REQS = atoi(argv[1]);
     } else if (argc != 2) {
-        log("argc: %d", argc);
+        FSOCK_LOG("argc: %d", argc);
     } else {
-        log("argv[1]: %s | atoi(%s): %d", argv[1], argv[1], atoi(argv[1]));
+        FSOCK_LOG("argv[1]: %s | atoi(%s): %d", argv[1], argv[1], atoi(argv[1]));
     }
 
     int i;
@@ -62,8 +63,6 @@ int main(int argc, char *argv[])
     {
         fsock_send(cli, "ping", 4);
     }
-
-    log("output length: %zu", fstream_output_size(cli->stream));
 
     start = mstime();
     ev_run(EV_A_ 0);

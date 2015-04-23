@@ -65,6 +65,9 @@ typedef struct {
 	fsock_conn_handler_t on_conn;
 	fsock_conn_handler_t on_disconnect;
 	fsock_frame_handler_t on_frame;
+
+	// states
+	int disconnecting;
 } fsock_internal_t;
 
 typedef struct {

@@ -3,8 +3,11 @@ INSTALL_MSG = "\nlibfsocket successfully installed! Thank you for using it."
 all:
 	cd src && make && cd ..
 
-test:
-	cd src && make test &&  cd ..
+examples:
+	cd src && make examples &&  cd ..
+
+bench:
+	cd src && make bench &&  cd ..
 
 install:
 	cd src && make install &&  cd .. && echo $(INSTALL_MSG)

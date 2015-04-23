@@ -23,9 +23,13 @@ sds.o: sds.c
 zmalloc.o: zmalloc.c
 	$(CC) zmalloc.c
 
-test: libfsocket
+examples: libfsocket
 	gcc ../examples/server.c $(INCLUDE) -L. -I. -lfsocket -o ../examples/server -g $(LIBS)
 	gcc ../examples/client.c $(INCLUDE) -L. -I. -lfsocket -o ../examples/client -g $(LIBS)
+
+bench: libfsocket
+	gcc ../examples/bench-server.c $(INCLUDE) -L. -I. -lfsocket -o ../examples/bench-server -g $(LIBS)
+	gcc ../examples/bench-client.c $(INCLUDE) -L. -I. -lfsocket -o ../examples/bench-client -g $(LIBS)
 
 install: libfsocket
 	cp ../include/fsocket.h /usr/local/include
@@ -40,3 +44,5 @@ clean:
 	rm -rf libfsocket.a
 	rm -rf ../examples/client
 	rm -rf ../examples/server
+	rm -rf ../examples/bench-client
+	rm -rf ../examples/bench-server

@@ -26,6 +26,7 @@ void io_accept(EV_P_ struct ev_io *a, int revents)
 	_prv->o_lock.val = 1;
 	_prv->is_reading = 0;
 	_prv->is_writing = 0;
+	_prv->disconnecting = 0;
 
 	if(srv_prv->on_conn)
 		srv_prv->on_conn(self, conn);
@@ -51,6 +52,12 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 	(void)revents;
 	fsock_t *sock = (fsock_t *)r->data;
 	fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+
+	if(_prv->disconnecting) {
+		printf("handle disconnect!\n");
+		ev_io_stop(EV_A_ r);
+		return;
+	}
 
 	if(sock->type == FSOCK_CLI)
 	{
@@ -93,6 +100,9 @@ void io_read(EV_P_ struct ev_io *r, int revents)
 				queue_push_right(main_thread.disconnect_queue, (void *)sock);
 				// fire reader thread
 				ev_async_send(main_thread.loop, &main_thread.disconnect_async);
+				// set this as disconnecting
+				_prv->disconnecting = 1;
+				printf("handle disconnect\n");
 			}
 			return;
 		}
@@ -181,6 +191,13 @@ void io_write(EV_P_ struct ev_io *w, int revents)
 	(void)revents;
 	fsock_t *sock = (fsock_t *)w->data;
 	fsock_internal_t *_prv = (fsock_internal_t *)sock->_prv;
+
+	if(_prv->disconnecting) {
+		printf("io_write handle disconnect!\n");
+		ev_io_stop(EV_A_ w);
+		return;
+	}
+
 	light_lock(&_prv->o_lock);
 	size_t o_len = sdslen(_prv->o_buf);
 	if(o_len == 0)
