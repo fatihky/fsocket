@@ -72,6 +72,9 @@ struct iovec *fsocket_stream_get_out_vectors(fsocket_stream_t *self, uint32_t ma
 	fsocket_frame_t *frame;
 	int vector_count = FSOCKET_MAX_OUT_FRAMES;
 	struct iovec *vectors = zmalloc(vector_count * sizeof(struct iovec));
+	uint32_t wanted;
+	uint32_t len = 0;
+	uint32_t tmp;
 
 	if (vectors == NULL)
 		return NULL;
@@ -83,16 +86,28 @@ struct iovec *fsocket_stream_get_out_vectors(fsocket_stream_t *self, uint32_t ma
 	do {
 		queue_push_right(self->out_progress, frame);
 
-		vectors[index].iov_len = FSOCKET_FRAME_HEADERS_SIZE;
-		vectors[index].iov_base = FSOCKET_FRAME_HEADERS_START(frame);
-		total_size += vectors[index].iov_len;
+		if (frame->cursor < FSOCKET_FRAME_HEADERS_SIZE) {
+			wanted = FSOCKET_FRAME_HEADERS_SIZE;
+			len = wanted - frame->cursor;
+			tmp = wanted - len;
+
+			vectors[index].iov_len = len;
+			vectors[index].iov_base = FSOCKET_FRAME_HEADERS_START(frame) + tmp;
+			total_size += vectors[index].iov_len;
+
+			frame->cursor += FSOCKET_FRAME_HEADERS_SIZE;
+		}
 
 		// TODO: tam gönderilmeyenlerde ne kadar gönderildiğini yaz gözüm
 		// sonra ne kadar gönderilmiş diye bakar nereden itibaren göndermen gerektiğine karar verirsin
 		// Not: Parça parça gönderme tamamlandığında bu yorum kendi kendini imha
 		// edecektir
-		vectors[index + 1].iov_len = frame->size - frame->cursor;
-		vectors[index + 1].iov_base = frame->data + frame->cursor;
+		wanted = frame->size;
+		len = frame->size - (frame->cursor - len);
+		tmp = wanted - len;
+
+		vectors[index + 1].iov_len = len;
+		vectors[index + 1].iov_base = frame->data + tmp;
 		total_size += vectors[index + 1].iov_len;
 		//printf("frame->cursor: %u\n", frame->cursor);
 
