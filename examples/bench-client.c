@@ -1,26 +1,32 @@
 #include <assert.h>
 #include "../src/fsocket.h"
 #include "../src/utils/adlist.h"
+#include "../src/utils/util.h"
 
 fsocket_t *client;
 int received;
-#define TOTAL 8
+long long start;
+
+#define TOTAL 30000
 
 void ctx_routine(void *data) {
 	fsocket_frame_t *frame;
 
-	// sonra istemciye gelenler
 	while(client != NULL && (frame = fsocket_pop_frame(client)) != NULL) {
-		printf("[client] Received: %.*s %d\n", frame->size, (char *)frame->data, received + 1);
-		//printf("[client] calling frame destroy for: %p\n", frame->pipe);
 		fsocket_frame_destroy(frame);
 
 		received++;
 
 		if (received == TOTAL) {
-			printf(".............\n");
+			long long end = mstime();
+			long long duration = end - start;
+			printf("Bench completed ========================\n");
+			printf("Total messages sent(and received): %d\n", TOTAL);
+			printf("Duration %lld\n", duration);
+			printf("Throughput %lld ops/sec\n", (TOTAL * 1000) / duration);
+			fsocket_destroy(client);
+			client = NULL;
 		}
-		//printf("\nolm ben burada arıyorum bu niye beni dinlemiyor?\n\n");
 	}
 }
 
@@ -38,6 +44,7 @@ int main(int argc, char *argv[]) {
 	lNode = listIndex(client->pipes, 0);
 
 	pipe = lNode->value;
+
 	int i = 0;
 	received = 0;
 
@@ -46,6 +53,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	ctx->routine = ctx_routine;
+
+	start = mstime();
 
 	fsocket_ctx_run(ctx, 0);
 	fsocket_ctx_destroy(ctx);

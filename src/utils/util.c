@@ -76,3 +76,17 @@ uint8_t *memdup(uint8_t *src, size_t size) {
     memcpy(out, src, size);
     return out;
 }
+
+long long ustime(void) {
+    struct timeval tv;
+    long long ust;
+
+    gettimeofday(&tv, NULL);
+    ust = ((long long)tv.tv_sec)*1000000;
+    ust += tv.tv_usec;
+    return ust;
+}
+
+long long mstime(void) {
+    return ustime()/1000;
+}

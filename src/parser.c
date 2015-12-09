@@ -24,20 +24,6 @@ void fsocket_parser_deinit(fsocket_parser_t *self) {
 	fsocket_parser_init(self);
 }
 
-static long long ustime(void) {
-    struct timeval tv;
-    long long ust;
-
-    gettimeofday(&tv, NULL);
-    ust = ((long long)tv.tv_sec)*1000000;
-    ust += tv.tv_usec;
-    return ust;
-}
-
-static long long mstime(void) {
-    return ustime()/1000;
-}
-
 void fsocket_parser_parse(fsocket_stream_t *self) {
 	// parse incoming data
 	rmy_log("parse incoming data buffer size: %zu ======", self->in_buffer->size);

@@ -22,7 +22,7 @@ void ctx_routine(void *data) {
 	fsocket_frame_t *frame;
 
 	while(server != NULL && (frame = fsocket_pop_frame(server)) != NULL) {
-		printf("[server] Received: %.*s\n", frame->size, (char *)frame->data);
+		//printf("[server] Received: %.*s\n", frame->size, (char *)frame->data);
 		fsocket_pipe_send(frame->pipe, "Wow such fsocket enabled socket! Welcome!", 41);
 		fsocket_frame_destroy(frame);
 	}
