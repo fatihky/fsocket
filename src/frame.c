@@ -1,5 +1,11 @@
 #include "frame.h"
 
+#ifdef FSOCKET_FRAME_DEBUG
+#	define debug(...) printf(__VA_ARGS__)
+#else
+#	define debug(...)
+#endif
+
 fsocket_frame_t *fsocket_frame_new(uint32_t size, char *buffer) {
 	fsocket_frame_t *frame = malloc(sizeof(fsocket_frame_t));
 	if (frame == NULL)
@@ -34,7 +40,7 @@ void fsocket_frame_deinit(fsocket_frame_t *self) {
 	if (self->data != NULL)
 		free(self->data);
 	if (self->pipe) {
-		printf("[frame.c] calling decref for: %p\n", self->pipe);
+		debug("[frame.c] calling decref for: %p\n", self->pipe);
 		fsocket_pipe_decref(self->pipe);
 	}
 	self->size = 0;

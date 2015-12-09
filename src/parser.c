@@ -5,6 +5,12 @@
 #include "frame.h"
 #include "stream.h"
 
+#ifdef FSOCKET_PARSER_DEBUG
+#	define debug(...) printf(__VA_ARGS__)
+#else
+#	define debug(...)
+#endif
+
 void fsocket_parser_init(fsocket_parser_t *parser) {
 	parser->must_read = 0;
 	parser->state = FSOCK_PROT_START;
@@ -115,7 +121,7 @@ void fsocket_parser_parse(fsocket_stream_t *self) {
 				rmy_log("TODO: push frame to the queue %.*s", f->size, (char *)f->data);
 				// queue_push_right(self->in_frames, copy);
 				copy->pipe = self->pipe;
-				printf("[parser.c:%d] calling incref for: %p\n", __LINE__, self->pipe);
+				debug("[parser.c:%d] calling incref for: %p\n", __LINE__, self->pipe);
 				fsocket_pipe_incref(self->pipe);
 				queue_push_right(self->pipe->parent->in_frames, copy);
 				rmy_log("[parser] in_frames: %p\n", self->pipe->parent->in_frames);

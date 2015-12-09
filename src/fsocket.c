@@ -4,6 +4,12 @@
 #include "utils/anet.h"
 #include "utils/adlist.h"
 
+#ifdef FSOCKET_FSOCKET_C_DEBUG
+#	define debug(...) printf(__VA_ARGS__)
+#else
+#	define debug(...)
+#endif
+
 fsocket_t *fsocket_new(fsocket_ctx_t *ctx) {
 	fsocket_t *s = c_new(fsocket_t);
 
@@ -17,7 +23,7 @@ fsocket_t *fsocket_new(fsocket_ctx_t *ctx) {
 
 void fsocket_destroy(fsocket_t *s) {
 	if (s->pipe) {
-		printf("[fsocket.c:%d] calling close for: %p\n", __LINE__, s->pipe);
+		debug("[fsocket.c:%d] calling close for: %p\n", __LINE__, s->pipe);
 		fsocket_pipe_close(s->pipe);
 	}
 
@@ -25,7 +31,7 @@ void fsocket_destroy(fsocket_t *s) {
 	listIter *it = listGetIterator(s->pipes, 0);
 
 	while((node = listNext(it)) != NULL) {
-		printf("[fsocket.c:%d] calling decref for: %p\n", __LINE__, node->value);
+		debug("[fsocket.c:%d] calling decref for: %p\n", __LINE__, node->value);
 		fsocket_pipe_close((fsocket_pipe_t *)node->value);
 	}
 
@@ -39,8 +45,8 @@ int fsocket_bind(fsocket_t *socket, char *addr, int port) {
 	fsocket_ctx_t *ctx = socket->ctx;
 	socket->pipe = fsocket_pipe_new();
 	socket->pipe->parent = socket;
-	//printf("[server] in_frames: %p\n", socket->in_frames);
-	printf("[server] pipe: %p\n", socket->pipe);
+	//debug("[server] in_frames: %p\n", socket->in_frames);
+	debug("[server] pipe: %p\n", socket->pipe);
 
 	char err[256] = "\0";
 	int fd;
@@ -90,10 +96,10 @@ int fsocket_connect(fsocket_t *socket, char *addr, int port) {
 	socket->pipes = listAddNodeTail(socket->pipes, (void *)new_pipe);
 
 	// for read event
-	printf("[fsocket.c:%d] *not* calling incref for: %p\n", __LINE__, new_pipe);
+	debug("[fsocket.c:%d] *not* calling incref for: %p\n", __LINE__, new_pipe);
 	//fsocket_pipe_incref(new_pipe);
 
-	printf("[fsocket.c:%d] pipe: %p\n", __LINE__, new_pipe);
+	debug("[fsocket.c:%d] pipe: %p\n", __LINE__, new_pipe);
 	fsocket_ctx_inc_active(ctx, new_pipe);
 
 	return FSOCKET_OK;
@@ -106,7 +112,7 @@ void fsocket_remove_pipe(fsocket_t *s, fsocket_pipe_t *p) {
 		return;
 
 	listDelNode(s->pipes, node);
-	printf("[fsocket.c remove pipe] calling close for: %p\n", p);
+	debug("[fsocket.c remove pipe] calling close for: %p\n", p);
 	fsocket_pipe_close(p);
 }
 

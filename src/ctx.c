@@ -8,7 +8,14 @@
 #include <signal.h>
 #endif
 
+#ifdef FSOCKET_CTX_DEBUG
+#	define debug(...) printf(__VA_ARGS__)
+#else
+#	define debug(...)
+#endif
+
 #define MAX_STACK_FRAMES 64
+
 static void *stack_traces[MAX_STACK_FRAMES];
 
 /* Resolve symbol name and source location given the path to the executable 
@@ -46,7 +53,7 @@ void posix_print_stack_trace()
   {
     if (addr2line("examples/basic", stack_traces[i]) != 0)
     {
-      printf("  error determining line # for: %s\n", messages[i]);
+      debug("  error determining line # for: %s\n", messages[i]);
     }
  
   }
@@ -59,7 +66,7 @@ static void stack_trace() {
 	char **strings = backtrace_symbols(callstack, size);
 	int i = 0;
 	for (; i < size; ++i)
-		fprintf(stderr, "%s\n", strings[i]);
+		debug("%s\n", strings[i]);
 	free(strings);
 }
 
@@ -112,19 +119,19 @@ void fsocket_ctx_inc_active(fsocket_ctx_t *ctx, fsocket_pipe_t *p) {
 	if (!node)
 		listAddNodeTail(ctx->pipes, p);
 	ctx->activecnt += 1;
-	printf("%s activecnt: %d | for: %p\n", "[ctx inc]", ctx->activecnt, p);
+	debug("%s activecnt: %d | for: %p\n", "[ctx inc]", ctx->activecnt, p);
 }
 
 void fsocket_ctx_dec_active(fsocket_ctx_t *ctx, fsocket_pipe_t *p) {
 	listNode *node = listSearchKey(ctx->pipes, p);
 	if (!node) {
-		printf("BULUNAMADI: %p\n", p);
+		debug("BULUNAMADI: %p\n", p);
 		//stack_trace();
 	}
 	ctx->activecnt -= 1;
-	printf("%s activecnt: %d | for: %p\n", "[ctx dec]", ctx->activecnt, p);
+	debug("%s activecnt: %d | for: %p\n", "[ctx dec]", ctx->activecnt, p);
 	if (ctx->activecnt == 0) {
-		printf("durdurdum olm ya\n");
+		debug("durdurdum olm ya\n");
 		ev_async_stop(ctx->loop, &ctx->async);
 	}
 }
