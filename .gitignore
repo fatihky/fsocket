@@ -2,6 +2,8 @@
 examples/basic
 examples/server
 examples/client
+examples/bench-server
+examples/bench-client
 
 # Object files
 *.o
