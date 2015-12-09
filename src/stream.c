@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <pthread.h>
-#include <queue.h>
 #include <ev.h>
 #include <unistd.h>
 #include "utils/debug.h"
@@ -13,6 +12,7 @@
 #include "utils/cbuffer.h"
 #include "utils/buffer.h"
 #include "utils/zmalloc.h"
+#include "utils/libhl/queue.h"
 #include "types.h"
 #include "stream.h"
 #include "frame.h"

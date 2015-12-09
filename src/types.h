@@ -1,7 +1,7 @@
 #ifndef _FSOCKET_TYPES_H_
 #define _FSOCKET_TYPES_H_
 
-#include <queue.h>
+#include "utils/libhl/queue.h"
 #include "utils/adlist.h"
 #include "utils/buffer.h"
 #include "utils/cbuffer.h"

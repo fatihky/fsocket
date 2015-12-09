@@ -1,6 +1,6 @@
 CFLAGS=-g
-LDFLAGS=-lhl -lpthread -lev
-C_FILES=$(wildcard *.c) $(wildcard utils/*.c)
+LDFLAGS=-lev
+C_FILES=$(wildcard *.c) $(wildcard utils/*.c) $(wildcard utils/libhl/*.c)
 OBJ_LIST=$(patsubst %.c,%.o,$(C_FILES))
 
 # examples
@@ -10,7 +10,7 @@ EXAMPLE_BINS := $(patsubst %.c,%,$(wildcard ../examples/*.c))
 all: libfsocket.a
 
 libfsocket.a: $(OBJ_LIST)
-	ar -rcs libfsocket.a *.o utils/*.o
+	ar -rcs libfsocket.a *.o utils/*.o utils/libhl/*.o
 
 example: $(OBJ_LIST) libfsocket.a $(EXAMPLE_BINS) ../../libev/ev.c
 

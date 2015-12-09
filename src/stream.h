@@ -1,7 +1,7 @@
 #ifndef _FSOCKET_STREAM_H_
 #define _FSOCKET_STREAM_H_
 
-#include <queue.h>
+#include "utils/libhl/queue.h"
 #include "types.h"
 
 fsocket_stream_t *fsocket_stream_new(void *data);
