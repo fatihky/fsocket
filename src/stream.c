@@ -101,6 +101,9 @@ struct iovec *fsocket_stream_get_out_vectors(fsocket_stream_t *self, uint32_t ma
 		index += 2;
 	} while(frame && index < vector_count && total_size < max_size);
 
+	if (frame)
+		queue_push_left(self->out_frames, frame);
+
 	*count = index;
 
 	//printf("total_size: %u\n", total_size);
