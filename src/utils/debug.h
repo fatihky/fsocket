@@ -1,7 +1,5 @@
-#ifndef _FSOCK_DEBUG_H
-#define _FSOCK_DEBUG_H 
-
-#include <stdio.h>
+#ifndef _RMY_DEBUG_H
+#define _RMY_DEBUG_H 
 
 #define GREEN(text) "\033[0;32m" text "\033[0;0m"
 #define RED(text) "\033[0;31m" text "\033[0;0m"
@@ -10,7 +8,7 @@
 #define MAGENTA(text) "\033[0;35m" text "\033[0;0m"
 #define BOLD(text) "\033[0;1m" text "\033[0;0m"
 
-#define FSOCK_LOG(...) \
+#define rmy_log(...) \
 	fprintf(stderr, YELLOW("%s:") RED("%d") MAGENTA(":%s" " -> "), \
 	 __FILE__, __LINE__, __func__); \
 	fprintf(stderr, "\033[0;32m"); \
@@ -18,15 +16,12 @@
 	fprintf(stderr, "\033[0;0m"); \
 	fprintf(stderr, "\n")
 
-#define FSOCK_LOG_ERR(...) \
+#define rmy_log_er(...) \
 	fprintf(stderr, YELLOW("%s:") RED("%d") MAGENTA(":%s" " -> "), \
 	 __FILE__, __LINE__, __func__); \
 	fprintf(stderr, "\033[0;31m"); \
 	fprintf(stderr,   __VA_ARGS__); \
 	fprintf(stderr, "\033[0;0m"); \
 	fprintf(stderr, "\n")
-
-#define log FSOCK_LOG
-#define log_err FSOCK_LOG_ERR
 
 #endif

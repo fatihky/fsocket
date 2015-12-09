@@ -1,19 +1,12 @@
-INSTALL_MSG = "\nlibfsocket successfully installed! Thank you for using it."
+# Taken from redis. See LICENSES
+# Top level makefile, the real shit is at src/Makefile
 
-all:
-	cd src && make && cd ..
+default: all
 
-examples:
-	cd src && make examples &&  cd ..
-
-bench:
-	cd src && make bench &&  cd ..
+.DEFAULT:
+	cd src && $(MAKE) $@
 
 install:
-	cd src && make install &&  cd .. && echo $(INSTALL_MSG)
+	cd src && $(MAKE) $@
 
-uninstall:
-	cd src && make uninstall &&  cd ..
-
-clean:
-	cd src && make clean &&  cd ..
+.PHONY: install
