@@ -9,6 +9,8 @@
 #	define debug(...) printf(__VA_ARGS__)
 #else
 #	define debug(...)
+#	undef rmy_log
+#	define rmy_log(...)
 #endif
 
 void fsocket_parser_init(fsocket_parser_t *parser) {
@@ -21,9 +23,6 @@ void fsocket_parser_deinit(fsocket_parser_t *self) {
 	fsocket_frame_deinit(&self->frame);
 	fsocket_parser_init(self);
 }
-
-#undef rmy_log
-#define rmy_log(...)
 
 static long long ustime(void) {
     struct timeval tv;

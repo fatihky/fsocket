@@ -6,10 +6,19 @@
 
 #define FSOCKET_TCP_INBUF (64 * 1024)
 
+// uncomment this if you want to see logs about reference counts
+//#define REF_DEBUG
+
 #ifdef FSOCKET_PIPE_DEBUG
 #	define debug(...) printf(__VA_ARGS__)
 #else
 #	define debug(...)
+#endif
+
+#ifdef REF_DEBUG
+#	define ref_debug debug
+#else
+#	define ref_debug(...)
 #endif
 
 static void fsocket_pipe_write(EV_P_ ev_io *io, int revents);
@@ -43,7 +52,7 @@ fsocket_pipe_t *fsocket_pipe_new() {
 
 void fsocket_pipe_incref(fsocket_pipe_t *p) {
 	p->ref_count += 1;
-	debug("[pipe incref] ref_count: %d (pipe: %p)\n", p->ref_count, p);
+	ref_debug("[pipe incref] ref_count: %d (pipe: %p)\n", p->ref_count, p);
 }
 
 void fsocket_pipe_decref(fsocket_pipe_t *p) {
@@ -51,7 +60,7 @@ void fsocket_pipe_decref(fsocket_pipe_t *p) {
 	int is_bind = p->parent->pipe == p;
 
 	p->ref_count -= 1;
-	debug("[pipe decref] ref_count: %d (pipe: %p, is_bind: %d)\n", p->ref_count, p, is_bind);
+	ref_debug("[pipe decref] ref_count: %d (pipe: %p, is_bind: %d)\n", p->ref_count, p, is_bind);
 
 	if (p->ref_count > 0)
 		return;
@@ -208,7 +217,7 @@ static void fsocket_pipe_read(EV_P_ ev_io *io, int revents)
   }
 
   fsocket_stream_extend(&pipe->stream, r);
-  //debug("Readed: %d\n", r);
+  debug("Readed: %d\n", r);
   fsocket_parser_parse(&pipe->stream);
 }
 
@@ -226,6 +235,7 @@ static void fsocket_pipe_write(EV_P_ ev_io *io, int revents)
 	if (queue_count(pipe->stream.out_frames) == 0) {
 		pipe->io_states.is_writing = 0;
 		fsocket_ctx_stop_io(ctx, &pipe->io_write);
+		debug("queue_count(pipe->stream.out_frames) == 0\n");
 		return;
 	}
 
@@ -236,5 +246,5 @@ static void fsocket_pipe_write(EV_P_ ev_io *io, int revents)
 	fsocket_stream_clear_out_progress(&pipe->stream, w);
 
 	zfree(vectors);
-	//debug("Written: %zu\ncount: %d\n", w, count);
+	debug("written: %zu\nvector count: %d\n", w, count);
 }
