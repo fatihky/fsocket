@@ -20,8 +20,7 @@ static void *stack_traces[MAX_STACK_FRAMES];
 
 /* Resolve symbol name and source location given the path to the executable 
    and an address */
-int addr2line(char const * const program_name, void const * const addr)
-{
+int addr2line(char const * const program_name, void const * const addr) {
   char addr2line_cmd[512] = {0};
  
   /* have addr2line map the address to the relent line in the code */
@@ -37,8 +36,7 @@ int addr2line(char const * const program_name, void const * const addr)
   return system(addr2line_cmd);
 }
 
-void posix_print_stack_trace()
-{
+void posix_print_stack_trace() {
   int i, trace_size = 0;
   char **messages = (char **)NULL;
  
@@ -49,14 +47,12 @@ void posix_print_stack_trace()
      our handler) and also skip the last frame as it's (always?) junk. */
   // for (i = 3; i < (trace_size - 1); ++i)
   // we'll use this for now so you can see what's going on
-  for (i = 0; i < trace_size; ++i)
-  {
-    if (addr2line("examples/basic", stack_traces[i]) != 0)
-    {
+  for (i = 0; i < trace_size; ++i) {
+    if (addr2line("examples/basic", stack_traces[i]) != 0) {
       debug("  error determining line # for: %s\n", messages[i]);
     }
- 
   }
+
   if (messages) { free(messages); } 
 }
 
@@ -78,7 +74,7 @@ static void ctx_async_cb(EV_P_ ev_async *a, int revents) {
 	if (ctx->routine != NULL)
 		ctx->routine(NULL);
 
-	ev_async_send(EV_A_ a);
+	// ev_async_send(EV_A_ a);
 }
 
 fsocket_ctx_t *fsocket_ctx_new() {

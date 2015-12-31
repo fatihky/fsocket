@@ -109,6 +109,15 @@ void fsocket_parser_parse(fsocket_stream_t *self) {
 				debug("[parser.c:%d] calling incref for: %p\n", __LINE__, self->pipe);
 				fsocket_pipe_incref(self->pipe);
 				queue_push_right(self->pipe->parent->in_frames, copy);
+
+				if (self->pipe->parent->async_event_fired == 0) {
+					self->pipe->parent->async_event_fired = 1;
+					ev_async_send(self->pipe->parent->ctx->loop, &self->pipe->parent->async);
+				}
+
+				if (!(self->pipe->parent->async_events & FSOCKET_ASYNC_EVENT_FRAME))
+					self->pipe->parent->async_events |= FSOCKET_ASYNC_EVENT_FRAME;
+
 				rmy_log("[parser] in_frames: %p\n", self->pipe->parent->in_frames);
 
 				// move pointer

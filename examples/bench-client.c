@@ -7,26 +7,31 @@ fsocket_t *client;
 int received;
 long long start;
 
-#define TOTAL 30000
+#define TOTAL 3000000
 
 void ctx_routine(void *data) {
 	fsocket_frame_t *frame;
 
 	while(client != NULL && (frame = fsocket_pop_frame(client)) != NULL) {
-		fsocket_frame_destroy(frame);
 
-		received++;
+	}
+}
 
-		if (received == TOTAL) {
-			long long end = mstime();
-			long long duration = end - start;
-			printf("Bench completed ========================\n");
-			printf("Total messages sent(and received): %d\n", TOTAL);
-			printf("Duration %lld\n", duration);
-			printf("Throughput %lld ops/sec\n", (TOTAL * 1000) / duration);
-			fsocket_destroy(client);
-			client = NULL;
-		}
+void on_frame(fsocket_t *self, fsocket_frame_t *frame)
+{
+	fsocket_frame_destroy(frame);
+
+	received++;
+
+	if (received == TOTAL) {
+		long long end = mstime();
+		long long duration = end - start;
+		printf("Bench completed ========================\n");
+		printf("Total messages sent(and received): %d\n", TOTAL);
+		printf("Duration %lld\n", duration);
+		printf("Throughput %lld ops/sec\n", (TOTAL * 1000ULL) / duration);
+		fsocket_destroy(client);
+		client = NULL;
 	}
 }
 
@@ -37,6 +42,7 @@ int main(int argc, char *argv[]) {
 	int ret;
 
 	client = fsocket_new(ctx);
+	client->on_frame = on_frame;
 
 	ret = fsocket_connect(client, "0.0.0.0", 2657);
 	assert(ret == FSOCKET_OK);

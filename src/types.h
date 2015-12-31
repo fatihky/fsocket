@@ -5,6 +5,7 @@
 #include "utils/adlist.h"
 #include "utils/buffer.h"
 #include "utils/cbuffer.h"
+#include "utils/list/list.h"
 
 typedef struct fsocket_t fsocket_t;
 typedef struct fsocket_ctx_t fsocket_ctx_t;
@@ -80,14 +81,33 @@ struct fsocket_pipe_s {
 	} io_states;
 };
 
+// async event types
+#define FSOCKET_ASYNC_EVENT_CONNECT 1
+#define FSOCKET_ASYNC_EVENT_DISCONNECT 1<<1
+#define FSOCKET_ASYNC_EVENT_FRAME 1<<2
+
+
+typedef struct {
+	int type;
+} fsocket_async_event_t;
+
+typedef void (*fsock_conn_cb)(fsocket_t *self, fsocket_pipe_t *remote);
+typedef void (*fsock_frame_cb)(fsocket_t *self, fsocket_frame_t *frame);
+
 // fsocket
 
 struct fsocket_t {
-	list *pipes;
-	fsocket_pipe_t *pipe;
-	fsocket_ctx_t *ctx;
-	queue_t *in_frames;
-	ev_io io_read;
+	list 						*pipes;
+	fsocket_ctx_t 	*ctx;
+	queue_t 				*in_frames;
+	fsocket_pipe_t 	*pipe;
+	ev_io 					io_read;
+	ev_async 				async;
+	int async_events;
+	int async_event_fired;
+	fsock_conn_cb 	on_conn;
+	fsock_conn_cb 	on_disconnect;
+	fsock_frame_cb 	on_frame;
 };
 
 struct fsocket_ctx_t {

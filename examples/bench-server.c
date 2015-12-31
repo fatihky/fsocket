@@ -30,6 +30,14 @@ void ctx_routine(void *data) {
 	// remove closed pipes
 	if (server != NULL)
 		fsocket_iterate_pipes(server, remove_closed_pipes, NULL);
+
+	printf("ctx_routine end\n");
+}
+
+void on_frame(fsocket_t *self, fsocket_frame_t *frame) {
+	//printf("[server] Received: %.*s\n", frame->size, (char *)frame->data);
+	fsocket_pipe_send(frame->pipe, "Wow such fsocket enabled socket! Welcome!", 41);
+	fsocket_frame_destroy(frame);
 }
 
 int main(int argc, char *argv[]) {
@@ -39,6 +47,7 @@ int main(int argc, char *argv[]) {
 	int ret;
 
 	server = fsocket_new(ctx);
+	server->on_frame = on_frame;
 
 	ret = fsocket_bind(server, "0.0.0.0", 2657);
 	assert(ret == FSOCKET_OK);

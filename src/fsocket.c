@@ -3,12 +3,35 @@
 #include "utils/zmalloc.h"
 #include "utils/anet.h"
 #include "utils/adlist.h"
+#include "utils/debug.h"
 
 #ifdef FSOCKET_FSOCKET_C_DEBUG
 #	define debug(...) printf(__VA_ARGS__)
 #else
 #	define debug(...)
 #endif
+
+static void _fsock_async_handler(EV_P_ ev_async *a, int revents)
+{
+	(void)revents;
+	fsocket_t *sock = (fsocket_t *)a->data;
+	list_node_t *node;
+
+	if (sock->async_events & FSOCKET_ASYNC_EVENT_FRAME) {
+		fsocket_frame_t *frame;
+
+		while((frame = (fsocket_frame_t *)queue_pop_left(sock->in_frames))) {
+			if (sock->on_frame) {
+				sock->on_frame(sock, frame);
+			}
+			else
+				fsocket_frame_destroy(frame);
+		}
+	}
+
+	sock->async_events = 0;
+	sock->async_event_fired = 0;
+}
 
 fsocket_t *fsocket_new(fsocket_ctx_t *ctx) {
 	fsocket_t *s = c_new(fsocket_t);
@@ -17,6 +40,15 @@ fsocket_t *fsocket_new(fsocket_ctx_t *ctx) {
 	s->pipe = NULL;
 	s->pipes = listCreate();
 	s->in_frames = queue_create();
+
+	s->async_event_fired = 0;
+	s->on_conn = NULL;
+	s->on_disconnect = NULL;
+	s->on_frame = NULL;
+
+	ev_async_init(&s->async, _fsock_async_handler);
+	ev_async_start(ctx->loop, &s->async);
+	s->async.data = s;
 
 	return s;
 }
@@ -34,6 +66,8 @@ void fsocket_destroy(fsocket_t *s) {
 		debug("[fsocket.c:%d] calling decref for: %p\n", __LINE__, node->value);
 		fsocket_pipe_close((fsocket_pipe_t *)node->value);
 	}
+
+	ev_async_stop(s->ctx->loop, &s->async);
 
 	listReleaseIterator(it);
 	listRelease(s->pipes);
