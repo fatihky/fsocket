@@ -14,4 +14,4 @@ TODO:
     will not bind to socket if socket already bounded. If you want, it will
     continue trying to bind until it can.
   - `fsock_connect`: this will resolve domains names with `dns.c`
-  - ``fsock_setsockopt` and `fsock_getsockopt`
+  - `fsock_setsockopt` and `fsock_getsockopt`
