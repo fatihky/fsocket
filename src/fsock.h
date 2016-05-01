@@ -82,7 +82,7 @@ extern "C" {
 
 /*  A number random enough not to collide with different errno ranges on      */
 /*  different OSes. The assumption is that error_t is at least 32-bit type.   */
-#define FSOCK_HAUSNUMERO 35417552
+#define FSOCK_HAUSNUMERO 156384712
 
 /*  On some platforms some standard POSIX errnos are not defined.    */
 #ifndef ENOTSUP
