@@ -168,18 +168,16 @@ extern "C" {
 #endif
 #ifndef EISCONN
 #define EISCONN (FSOCK_HAUSNUMERO + 27)
-#define NN_EISCONN_DEFINED
+#define FSOCK_EISCONN_DEFINED
 #endif
 #ifndef ESOCKTNOSUPPORT
 #define ESOCKTNOSUPPORT (FSOCK_HAUSNUMERO + 28)
 #endif
 
-/*  Native fsock error codes.                                               */
-#ifndef ETERM
-#define ETERM (FSOCK_HAUSNUMERO + 53)
-#endif
-#ifndef EFSM
-#define EFSM (FSOCK_HAUSNUMERO + 54)
+/*  Native fsock error codes.                                                 */
+/*  fsocket terminating.                                                      */
+#ifndef EFTERM
+#define EFTERM (FSOCK_HAUSNUMERO + 53)
 #endif
 
 /*  This function retrieves the errno as it is known to the library.          */
