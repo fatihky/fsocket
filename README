@@ -4,7 +4,7 @@ fsocket
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/fatihky/fsocket/blob/new-fsocket/COPYING)
 
 TODO:
-  - `fsock_send`: send frame to specific connection
+  - `fsock_send`: send frame to specific connection.
   - `fsock_sendc`: send frame to one or more connections at once. you can send to
     only one bounded address' connections or all incoming/outgoing connections.
   - `fsock_close`: this will close all connections attached to socket. If you
