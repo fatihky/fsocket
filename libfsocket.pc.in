@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/fsocket
+
+Name: Fsocket
+Description: fsocket library.
+URL: https://github.com/fatihky/fsocket
+Version: @FSOCK_ABI_VERSION@
+Requires:
+Libs: -L${libdir} -lfsock @LIBS@
+Cflags: -I${includedir}

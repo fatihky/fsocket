@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/fsocket
+
+Name: Fsocket
+Description: fsocket library.
+URL: https://github.com/fatihky/fsocket
+Version: 0.1.0
+Requires:
+Libs: -L${libdir} -lfsock -lanl -lrt  
+Cflags: -I${includedir}

@@ -28,7 +28,7 @@
 #include <string.h>
 
 /*  Include nn.h header to define nanomsg-specific error codes. */
-//#include "../nn.h"
+// #include "../nn.h"
 
 #include "fast.h"
 

@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: @CMAKE_PROJECT_NAME@
+Description: @FSOCK_DESCRIPTION@
+URL: https://github.com/fatihky/fsocket
+Version: @FSOCK_VERSION_STR@
+Requires:
+Libs: -L${libdir} -l@CMAKE_PROJECT_NAME@
+Cflags: -I${includedir}
