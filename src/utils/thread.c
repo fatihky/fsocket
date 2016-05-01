@@ -126,6 +126,7 @@ static void accept_cb (EV_P_ ev_io *a, int revents) {
   struct fsock_sock *conn = malloc (sizeof (struct fsock_sock));
   struct fsock_thread *thr;
   int index;
+  int indexlocal;
 
   if (conn == NULL)
     return;
@@ -137,6 +138,7 @@ static void accept_cb (EV_P_ ev_io *a, int revents) {
   conn->owner = sock->owner;
   fsock_mutex_lock (&sock->sync);
   index = fsock_parr_insert (&sock->conns, conn);
+  indexlocal = index;
   fsock_mutex_unlock (&sock->sync);
   if (index < 0) {
     free (conn);
@@ -155,6 +157,7 @@ static void accept_cb (EV_P_ ev_io *a, int revents) {
   conn->thr = thr;
   conn->fd = fd;
   conn->idx = index;
+  conn->idxlocal = indexlocal;
   fsock_thread_start_connection (thr, conn);
   // notify socket about this event or do not like zeromq
   printf ("notify socket about this event or do not like zeromq {socket: %d|%d}\n", sock->idx, sock->uniq);

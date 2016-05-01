@@ -34,6 +34,7 @@ static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
 
 void fsock_sock_init (struct fsock_sock *self, int type) {
   self->idx = -1; /*  used for debugging */
+  self->idxlocal = -1;
   self->type = type;
   self->fd = -1;
   self->owner = NULL;
@@ -76,13 +77,10 @@ int fsock_sock_queue_event (struct fsock_sock *self, int type,
   }
   fsock_queue_item_init (&event->item);
   fsock_mutex_lock (&self->sync);
-  //printf ("new event added to sock: %d|%d [fsock_queue_empty: %d]\n", self->idx, self->uniq, fsock_queue_empty (&self->events));
   if (self->want_efd == 1) {
     nn_efd_signal (&self->efd);
     self->want_efd = 0;
-    //printf ("efd'ti tetikledim.\n");
-  } //else
-    //printf ("kimse efd'yi beklemiyor.\n");
+  }
   fsock_queue_push (&self->events, &event->item);
   fsock_mutex_unlock (&self->sync);
   return 0;

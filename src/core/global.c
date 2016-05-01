@@ -196,3 +196,67 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   frm_out_frame_list_insert (&conn->ol, li);
   fsock_mutex_unlock(&conn->sync);
 }
+
+static inline int fsock_conn_type(struct fsock_sock *sock, int c) {
+  return sock->cons.elems[c]->type;
+}
+
+static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr, int dflags,
+    int sndflags) {
+  struct fsock_sock *sock;
+  sock = self.socks.elems[s];
+  fsock_mutex_lock (&sock->sync);
+  int index;
+  int rc = 0;
+  for(void *ptr = fsock_parr_begin (parr, &index);
+      ptr != fsock_parr_end (parr);
+      ptr = fsock_parr_next (parr, &index)) {
+
+    if (dflags == 0 || /*  No flags set. */
+      ((dflags & FSOCK_DIST_IN) && /*  Send to only incoming conns. */
+        fsock_conn_type(sock, index) == FSOCK_SOCK_IN) ||
+      ((dflags & FSOCK_DIST_OUT) && /*  Send to only outgoing conns. */
+        fsock_conn_type(sock, index) == FSOCK_SOCK_OUT)) {
+
+      rc = fsock_send(s, index, sndflags);
+      if (rc != 0 && !(flags & FSOCK_NOSTOP_ONERR))
+        break;
+    }
+  }
+  fsock_mutex_unlock (&sock->sync);
+  return rc;
+}
+
+int fsock_sendc (int s, int type, int b, int c, struct frm_frame *fr,
+    int dflags, int sndflags) {
+
+  struct fsock_sock *sock;
+  sock = self.socks.elems[s];
+
+  if (type == FSOCK_SND_ALL)
+    return fsock_send_all (s, &sock->conns, fr, dflags, sndflags);
+
+  if (type == FSOCK_SND_BIND) {
+    // get bind socket
+    assert (sock->binds.last > b);
+    struct fsock_sock *bnd = sock->binds.elems[b];
+    assert (bnd);
+    return fsock_send_all (s, &bnd->conns, fr, dflags, sndflags);
+  }
+
+  if (type == FSOCK_SND_BINDCONN) {
+    // get bind socket
+    assert (sock->binds.last > b);
+    struct fsock_sock *bnd = sock->binds.elems[b];
+    assert (bnd);
+
+    // get connection
+    assert (bnd->conns.last > c);
+    struct fsock_sock *conn = bnd->conns.elems[c];
+    assert (conn);
+    return fsock_send(s, conn->idxlocal, fr, sndflags);
+  }
+
+  errno = EINVAL;
+  return -1;
+}

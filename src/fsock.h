@@ -196,6 +196,7 @@ extern "C" {
 
 /*  Send/recv options.                                                        */
 #define FSOCK_DONWAIT 1
+#define FSOCK_NOSTOP_ONERR 2
 
 #define FSOCK_EVENT_NEW_CONN 1
 #define FSOCK_EVENT_LOST_CONN 2
@@ -210,12 +211,21 @@ struct fsock_event {
   struct fsock_queue_item item;
 };
 
+#define FSOCK_SND_ALL 1         /*  Send frame to all connections.            */
+#define FSOCK_SND_BIND 3        /*  Send frame to all connection of the bind. */
+#define FSOCK_SND_BINDCONN 4    /*  Send frame to specific bind's connection. */
+
+#define FSOCK_DIST_IN 1   /*  Distribute only to incoming connections.        */
+#define FSOCK_DIST_OUT 2  /*  Distribute only to outgoing connections.        */
+
 int fsock_socket (char *name);
 int fsock_bind (int s, char *addr, int port);
 int fsock_connect (int s, char *addr, int port);
 struct fsock_event *fsock_get_event (int s, int flags);
 int fsock_rand (int s);
 int fsock_send (int s, int c, struct frm_frame *fr, int flags);
+int fsock_sendc (int s, int type, int b, int c, struct frm_frame *fr,
+  int dflags, int flags);
 
 #ifdef __cplusplus
 }

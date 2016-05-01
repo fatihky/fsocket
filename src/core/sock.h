@@ -39,7 +39,8 @@ struct fsock_sock {
   struct frm_out_frame_list ol;
   struct frm_parser parser;
   /* debugging */
-  int idx; // global id number
+  int idx; // socket-wide index
+  int idxlocal; // sub-socket(bind)-wide index
 };
 
 void fsock_sock_init (struct fsock_sock *self, int type);
