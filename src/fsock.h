@@ -23,8 +23,8 @@
     IN THE SOFTWARE.
 */
 
-#ifndef NN_H_INCLUDED
-#define NN_H_INCLUDED
+#ifndef FSOCK_H_INCLUDED
+#define FSOCK_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,25 +35,25 @@ extern "C" {
 #include <stdint.h>
 
 /*  Handle DSO symbol visibility. */
-#if defined NN_NO_EXPORTS
-#   define NN_EXPORT
+#if defined FSOCK_NO_EXPORTS
+#   define FSOCK_EXPORT
 #else
 #   if defined _WIN32
 #      if defined FSOCK_STATIC_LIB
-#          define NN_EXPORT extern
+#          define FSOCK_EXPORT extern
 #      elif defined FSOCK_SHARED_LIB
-#          define NN_EXPORT __declspec(dllexport)
+#          define FSOCK_EXPORT __declspec(dllexport)
 #      else
-#          define NN_EXPORT __declspec(dllimport)
+#          define FSOCK_EXPORT __declspec(dllimport)
 #      endif
 #   else
 #      if defined __SUNPRO_C
-#          define NN_EXPORT __global
+#          define FSOCK_EXPORT __global
 #      elif (defined __GNUC__ && __GNUC__ >= 4) || \
              defined __INTEL_COMPILER || defined __clang__
-#          define NN_EXPORT __attribute__ ((visibility("default")))
+#          define FSOCK_EXPORT __attribute__ ((visibility("default")))
 #      else
-#          define NN_EXPORT
+#          define FSOCK_EXPORT
 #      endif
 #   endif
 #endif
@@ -174,7 +174,7 @@ extern "C" {
 #define ESOCKTNOSUPPORT (FSOCK_HAUSNUMERO + 28)
 #endif
 
-/*  Native nanomsg error codes.                                               */
+/*  Native fsock error codes.                                               */
 #ifndef ETERM
 #define ETERM (FSOCK_HAUSNUMERO + 53)
 #endif
@@ -186,240 +186,17 @@ extern "C" {
 /*  The goal of this function is to make the code 100% portable, including    */
 /*  where the library is compiled with certain CRT library (on Windows) and   */
 /*  linked to an application that uses different CRT library.                 */
-NN_EXPORT int nn_errno (void);
+// FSOCK_EXPORT int nn_errno (void);
 
 /*  Resolves system errors and native errors to human-readable string.        */
-NN_EXPORT const char *nn_strerror (int errnum);
-
-
-/*  Returns the symbol name (e.g. "NN_REQ") and value at a specified index.   */
-/*  If the index is out-of-range, returns NULL and sets errno to EINVAL       */
-/*  General usage is to start at i=0 and iterate until NULL is returned.      */
-NN_EXPORT const char *nn_symbol (int i, int *value);
-
-/*  Constants that are returned in `ns` member of nn_symbol_properties        */
-#define NN_NS_NAMESPACE 0
-#define NN_NS_VERSION 1
-#define NN_NS_DOMAIN 2
-#define NN_NS_TRANSPORT 3
-#define NN_NS_PROTOCOL 4
-#define NN_NS_OPTION_LEVEL 5
-#define NN_NS_SOCKET_OPTION 6
-#define NN_NS_TRANSPORT_OPTION 7
-#define NN_NS_OPTION_TYPE 8
-#define NN_NS_OPTION_UNIT 9
-#define NN_NS_FLAG 10
-#define NN_NS_ERROR 11
-#define NN_NS_LIMIT 12
-#define NN_NS_EVENT 13
-#define NN_NS_STATISTIC 14
-
-/*  Constants that are returned in `type` member of nn_symbol_properties      */
-#define NN_TYPE_NONE 0
-#define NN_TYPE_INT 1
-#define NN_TYPE_STR 2
-
-/*  Constants that are returned in the `unit` member of nn_symbol_properties  */
-#define NN_UNIT_NONE 0
-#define NN_UNIT_BYTES 1
-#define NN_UNIT_MILLISECONDS 2
-#define NN_UNIT_PRIORITY 3
-#define NN_UNIT_BOOLEAN 4
-#define NN_UNIT_MESSAGES 5
-#define NN_UNIT_COUNTER 6
-
-/*  Structure that is returned from nn_symbol  */
-struct nn_symbol_properties {
-
-    /*  The constant value  */
-    int value;
-
-    /*  The constant name  */
-    const char* name;
-
-    /*  The constant namespace, or zero for namespaces themselves */
-    int ns;
-
-    /*  The option type for socket option constants  */
-    int type;
-
-    /*  The unit for the option value for socket option constants  */
-    int unit;
-};
-
-/*  Fills in nn_symbol_properties structure and returns it's length           */
-/*  If the index is out-of-range, returns 0                                   */
-/*  General usage is to start at i=0 and iterate until zero is returned.      */
-NN_EXPORT int nn_symbol_info (int i,
-    struct nn_symbol_properties *buf, int buflen);
-
-/******************************************************************************/
-/*  Helper function for shutting down multi-threaded applications.            */
-/******************************************************************************/
-
-NN_EXPORT void nn_term (void);
-
-/******************************************************************************/
-/*  Zero-copy support.                                                        */
-/******************************************************************************/
-
-#define NN_MSG ((size_t) -1)
-
-NN_EXPORT void *nn_allocmsg (size_t size, int type);
-NN_EXPORT void *nn_reallocmsg (void *msg, size_t size);
-NN_EXPORT int nn_freemsg (void *msg);
-
-/******************************************************************************/
-/*  Socket definition.                                                        */
-/******************************************************************************/
-
-struct nn_iovec {
-    void *iov_base;
-    size_t iov_len;
-};
-
-struct nn_msghdr {
-    struct nn_iovec *msg_iov;
-    int msg_iovlen;
-    void *msg_control;
-    size_t msg_controllen;
-};
-
-struct nn_cmsghdr {
-    size_t cmsg_len;
-    int cmsg_level;
-    int cmsg_type;
-};
-
-/*  Internal stuff. Not to be used directly.                                  */
-NN_EXPORT  struct nn_cmsghdr *nn_cmsg_nxthdr_ (
-    const struct nn_msghdr *mhdr,
-    const struct nn_cmsghdr *cmsg);
-#define NN_CMSG_ALIGN_(len) \
-    (((len) + sizeof (size_t) - 1) & (size_t) ~(sizeof (size_t) - 1))
-
-/* POSIX-defined msghdr manipulation. */
-
-#define NN_CMSG_FIRSTHDR(mhdr) \
-    nn_cmsg_nxthdr_ ((struct nn_msghdr*) (mhdr), NULL)
-
-#define NN_CMSG_NXTHDR(mhdr, cmsg) \
-    nn_cmsg_nxthdr_ ((struct nn_msghdr*) (mhdr), (struct nn_cmsghdr*) (cmsg))
-
-#define NN_CMSG_DATA(cmsg) \
-    ((unsigned char*) (((struct nn_cmsghdr*) (cmsg)) + 1))
-
-/* Extensions to POSIX defined by RFC 3542.                                   */
-
-#define NN_CMSG_SPACE(len) \
-    (NN_CMSG_ALIGN_ (len) + NN_CMSG_ALIGN_ (sizeof (struct nn_cmsghdr)))
-
-#define NN_CMSG_LEN(len) \
-    (NN_CMSG_ALIGN_ (sizeof (struct nn_cmsghdr)) + (len))
-
-/*  SP address families.                                                      */
-#define AF_SP 1
-#define AF_SP_RAW 2
-
-/*  Max size of an SP address.                                                */
-#define NN_SOCKADDR_MAX 128
-
-/*  Socket option levels: Negative numbers are reserved for transports,
-    positive for socket types. */
-#define NN_SOL_SOCKET 0
-
-/*  Generic socket options (NN_SOL_SOCKET level).                             */
-#define NN_LINGER 1
-#define NN_SNDBUF 2
-#define NN_RCVBUF 3
-#define NN_SNDTIMEO 4
-#define NN_RCVTIMEO 5
-#define NN_RECONNECT_IVL 6
-#define NN_RECONNECT_IVL_MAX 7
-#define NN_SNDPRIO 8
-#define NN_RCVPRIO 9
-#define NN_SNDFD 10
-#define NN_RCVFD 11
-#define NN_DOMAIN 12
-#define NN_PROTOCOL 13
-#define NN_IPV4ONLY 14
-#define NN_SOCKET_NAME 15
-#define NN_RCVMAXSIZE 16
-
-/*  Send/recv options.                                                        */
-#define NN_DONTWAIT 1
-
-/*  Ancillary data.                                                           */
-#define PROTO_SP 1
-#define SP_HDR 1
-
-NN_EXPORT int nn_socket (int domain, int protocol);
-NN_EXPORT int nn_close (int s);
-NN_EXPORT int nn_setsockopt (int s, int level, int option, const void *optval,
-    size_t optvallen);
-NN_EXPORT int nn_getsockopt (int s, int level, int option, void *optval,
-    size_t *optvallen);
-NN_EXPORT int nn_bind (int s, const char *addr);
-NN_EXPORT int nn_connect (int s, const char *addr);
-NN_EXPORT int nn_shutdown (int s, int how);
-NN_EXPORT int nn_send (int s, const void *buf, size_t len, int flags);
-NN_EXPORT int nn_recv (int s, void *buf, size_t len, int flags);
-NN_EXPORT int nn_sendmsg (int s, const struct nn_msghdr *msghdr, int flags);
-NN_EXPORT int nn_recvmsg (int s, struct nn_msghdr *msghdr, int flags);
-
-/******************************************************************************/
-/*  Socket mutliplexing support.                                              */
-/******************************************************************************/
-
-#define NN_POLLIN 1
-#define NN_POLLOUT 2
-
-struct nn_pollfd {
-    int fd;
-    short events;
-    short revents;
-};
-
-NN_EXPORT int nn_poll (struct nn_pollfd *fds, int nfds, int timeout);
-
-/******************************************************************************/
-/*  Built-in support for devices.                                             */
-/******************************************************************************/
-
-NN_EXPORT int nn_device (int s1, int s2);
-
-/******************************************************************************/
-/*  Statistics.                                                               */
-/******************************************************************************/
-
-/*  Transport statistics  */
-#define NN_STAT_ESTABLISHED_CONNECTIONS 101
-#define NN_STAT_ACCEPTED_CONNECTIONS    102
-#define NN_STAT_DROPPED_CONNECTIONS     103
-#define NN_STAT_BROKEN_CONNECTIONS      104
-#define NN_STAT_CONNECT_ERRORS          105
-#define NN_STAT_BIND_ERRORS             106
-#define NN_STAT_ACCEPT_ERRORS           107
-
-#define NN_STAT_CURRENT_CONNECTIONS     201
-#define NN_STAT_INPROGRESS_CONNECTIONS  202
-#define NN_STAT_CURRENT_EP_ERRORS       203
-
-/*  The socket-internal statistics  */
-#define NN_STAT_MESSAGES_SENT           301
-#define NN_STAT_MESSAGES_RECEIVED       302
-#define NN_STAT_BYTES_SENT              303
-#define NN_STAT_BYTES_RECEIVED          304
-/*  Protocol statistics  */
-#define	NN_STAT_CURRENT_SND_PRIORITY    401
-
-NN_EXPORT uint64_t nn_get_statistic (int s, int stat);
+// FSOCK_EXPORT const char *nn_strerror (int errnum);
 
 #include <framer/framer.h>
 #include "utils/queue.h"
 
 #pragma once
 
+/*  Send/recv options.                                                        */
 #define FSOCK_DONWAIT 1
 
 #define FSOCK_EVENT_NEW_CONN 1
