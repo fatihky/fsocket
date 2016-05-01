@@ -194,25 +194,36 @@ static void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   struct fsock_sock *conn = frm_cont (w, struct fsock_sock, wio);
   assert (conn->fd == w->fd);
 
+  fsock_mutex_lock (&conn->sync);
+
   if (frm_list_empty (&conn->ol.list)) {
     printf ("All frames are written.\n");
+    fsock_mutex_unlock (&conn->sync);
     goto stop;
   }
 
   struct iovec iovs[512];
   int retiovcnt = -1;
   ssize_t tow = frm_out_frame_list_get_iovs (&conn->ol, iovs, 512, &retiovcnt);
+
+  /*  unlock mutex and do synchronous operation */
+  fsock_mutex_unlock (&conn->sync);
+
   ssize_t nw = writev (w->fd, iovs, retiovcnt);
 
-  if (nw < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+  if (nw < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
     return;
+  }
 
   if (nw <= 0) {
     printf ("nw: %zd\n", nw);
     goto stop;
   }
 
+  fsock_mutex_lock (&conn->sync);
   frm_out_frame_list_written (&conn->ol, nw);
+  fsock_mutex_unlock (&conn->sync);
+
   return;
 
 stop:
