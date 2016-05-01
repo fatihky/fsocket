@@ -107,157 +107,19 @@ static void *thread_routine (void *data) {
   return NULL;
 }
 
-static void accept_cb (EV_P_ ev_io *a, int revents) {
-  printf ("accept new connection\n");
-  char err[255];
-  char ip[255];
-  int port = 0;
-  int fd = anetTcpAccept(err, a->fd, ip, 255, &port);
-  if (fd < 0)
-    return;
-
-  /*
-    Sadece bu iş parçacığı bu sokete yeni bağlantı ekleyip bağlantıları
-    çıkarabileceği için için yeni bağlantıları sokete eklerken mutex
-    kullanmıyorum. İlerde kullanırım. Çalışsın bir.
-  */
-  struct fsock_sock *sock = frm_cont (a, struct fsock_sock, rio);
-  struct fsock_sock *root = sock->owner;
-  struct fsock_sock *conn = malloc (sizeof (struct fsock_sock));
-  struct fsock_thread *thr;
-  int index;
-  int indexlocal;
-
-  if (conn == NULL)
-    return;
-
-  /*  we check socket's owner's type here because this socket is a bind socket
-      that attached to*/
-  assert (sock->owner->type == FSOCK_SOCK_BASE);
-  fsock_sock_init (conn, FSOCK_SOCK_IN);
-  conn->owner = sock->owner;
-  fsock_mutex_lock (&sock->sync);
-  index = fsock_parr_insert (&sock->conns, conn);
-  indexlocal = index;
-  fsock_mutex_unlock (&sock->sync);
-  if (index < 0) {
-    free (conn);
-    return;
-  }
-  fsock_mutex_lock(&root->sync);
-  index = fsock_parr_insert (&root->conns, conn);
-  fsock_mutex_unlock(&root->sync);
-  if (index < 0) {
-    printf ("can not add conection to the root  socket's connections array.");
-    return;
-  }
-  fsock_glock_lock();
-  thr = f_choose_thr();
-  fsock_glock_unlock();
-  conn->thr = thr;
-  conn->fd = fd;
-  conn->idx = index;
-  conn->idxlocal = indexlocal;
-  fsock_thread_start_connection (thr, conn);
-  // notify socket about this event or do not like zeromq
-  printf ("notify socket about this event or do not like zeromq {socket: %d|%d}\n", sock->idx, sock->uniq);
-}
-
-static void read_cb (EV_P_ ev_io *r, int revents)
-{
-  struct fsock_sock *conn = frm_cont (r, struct fsock_sock, rio);
-  assert (conn->fd == r->fd);
-
-  struct frm_cbuf *cbuf = frm_cbuf_new (1400);
-
-  if (cbuf == NULL)
-    return;
-
-  ssize_t nread = read (r->fd, cbuf->buf, 1400);
-
-  if (nread == 0)
-    goto stop;
-
-  if (nread < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-    goto clean;
-
-  int rc = frm_parser_parse (&conn->parser, cbuf, nread);
-
-  if (rc != 0) {
-    printf ("parse error. rc: %d\n", rc);
-    goto stop;
-  }
-
-  while (!frm_list_empty (&conn->parser.in_frames)) {
-    struct frm_list_item *li = frm_list_begin (&conn->parser.in_frames);
-
-    if (!li)
-      break;
-
-    // remove frame from the list
-    frm_list_erase (&conn->parser.in_frames, li);
-
-    struct frm_frame *fr = frm_cont (li, struct frm_frame, item);
-
-    // frm_frame_destroy (fr);
-    fsock_sock_queue_event (conn->owner, FSOCK_EVENT_NEW_FRAME, fr, -1);
-  }
-
-  goto clean;
-
-stop:
-  printf ("bağlantı koptu.\n");
-  ev_io_stop (EV_A_ r);
-clean:
-  frm_cbuf_unref (cbuf);
-}
-
-static void write_cb (EV_P_ ev_io *w, int revents)
-{
-  struct fsock_sock *conn = frm_cont (w, struct fsock_sock, wio);
-  assert (conn->fd == w->fd);
-
-  if (frm_list_empty (&conn->ol.list)) {
-    printf ("All frames are written.\n");
-    goto stop;
-  }
-
-  struct iovec iovs[512];
-  int retiovcnt = -1;
-  ssize_t tow = frm_out_frame_list_get_iovs (&conn->ol, iovs, 512, &retiovcnt);
-  ssize_t nw = writev (w->fd, iovs, retiovcnt);
-
-  if (nw < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-    return;
-
-  if (nw <= 0) {
-    printf ("nw: %zd\n", nw);
-    goto stop;
-  }
-
-  frm_out_frame_list_written (&conn->ol, nw);
-  return;
-
-stop:
-  ev_io_stop (EV_A_ w);
-  fsock_mutex_lock (&conn->sync);
-  conn->writing = 0;
-  fsock_mutex_unlock (&conn->sync);
-}
-
 static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
   struct task_data *data = task->data;
   struct fsock_sock *sock = data->sock;
   switch (task->type) {
     case FSOCK_THR_BIND: {
       printf ("listen on: %s:%d {sock: %d|%d}\n", data->addr, data->port, sock->idx, sock->uniq);
-      ev_io_init (&sock->rio, accept_cb, sock->fd, EV_READ);
+      ev_io_init (&sock->rio, fsock_sock_accept_handler, sock->fd, EV_READ);
       ev_io_start (thr->loop, &sock->rio);
     } break;
     case FSOCK_THR_CONN: {
       printf ("start i/o for conn\n");
-      ev_io_init (&sock->rio, read_cb, sock->fd, EV_READ);
-      ev_io_init (&sock->wio, write_cb, sock->fd, EV_WRITE);
+      ev_io_init (&sock->rio, fsock_sock_read_handler, sock->fd, EV_READ);
+      ev_io_init (&sock->wio, fsock_sock_write_handler, sock->fd, EV_WRITE);
       ev_io_start (thr->loop, &sock->rio);
       if (sock->type == FSOCK_SOCK_OUT) {
         printf ("bu bir dış bağlantı\n");

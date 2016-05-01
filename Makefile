@@ -463,14 +463,14 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /root/calismalar/framer-ev/nanomsg/missing aclocal-1.14
+ACLOCAL = ${SHELL} /root/calismalar/fsocket/missing aclocal-1.14
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
 ASCIIDOCTOR = 
-AUTOCONF = ${SHELL} /root/calismalar/framer-ev/nanomsg/missing autoconf
-AUTOHEADER = ${SHELL} /root/calismalar/framer-ev/nanomsg/missing autoheader
-AUTOMAKE = ${SHELL} /root/calismalar/framer-ev/nanomsg/missing automake-1.14
+AUTOCONF = ${SHELL} /root/calismalar/fsocket/missing autoconf
+AUTOHEADER = ${SHELL} /root/calismalar/fsocket/missing autoheader
+AUTOMAKE = ${SHELL} /root/calismalar/fsocket/missing automake-1.14
 AWK = gawk
 CC = gcc -std=gnu99
 CCDEPMODE = depmode=gcc3
@@ -478,7 +478,7 @@ CFLAGS = -g -O2 -pthread
 CPP = gcc -std=gnu99 -E
 CPPFLAGS =  -D_GNU_SOURCE -D_GNU_SOURCE -D_GNU_SOURCE
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"fsocket\" -DPACKAGE_TARNAME=\"fsocket\" -DPACKAGE_VERSION=\"a8cc015-dirty\" -DPACKAGE_STRING=\"fsocket\ a8cc015-dirty\" -DPACKAGE_BUGREPORT=\"fsocket@freelists.org\" -DPACKAGE_URL=\"https://github.com/fatihky/fsocket\" -DPACKAGE=\"fsocket\" -DVERSION=\"a8cc015-dirty\" -DFSOCK_HAVE_GCC=1 -DFSOCK_HAVE_LINUX=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_EVENTFD=1 -DFSOCK_HAVE_EVENTFD=1 -DHAVE_PIPE=1 -DFSOCK_HAVE_PIPE=1 -DHAVE_PIPE2=1 -DFSOCK_HAVE_PIPE2=1 -DFSOCK_HAVE_CLOCK_MONOTONIC=1 -DHAVE_LIBRT=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_POLL=1 -DFSOCK_HAVE_POLL=1 -DHAVE_EPOLL_CREATE=1 -DFSOCK_USE_EPOLL=1 -DHAVE_ACCEPT4=1 -DFSOCK_HAVE_ACCEPT4=1 -DFSOCK_HAVE_GETADDRINFO_A=1 -DFSOCK_HAVE_SOCKETPAIR=1 -DFSOCK_HAVE_SEMAPHORE=1 -DFSOCK_HAVE_GCC_ATOMIC_BUILTINS=1 -DFSOCK_HAVE_MSG_CONTROL=1 -DFSOCK_USE_EVENTFD=1 -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
+DEFS = -DPACKAGE_NAME=\"fsocket\" -DPACKAGE_TARNAME=\"fsocket\" -DPACKAGE_VERSION=\"07183cc-dirty\" -DPACKAGE_STRING=\"fsocket\ 07183cc-dirty\" -DPACKAGE_BUGREPORT=\"fsocket@freelists.org\" -DPACKAGE_URL=\"https://github.com/fatihky/fsocket\" -DPACKAGE=\"fsocket\" -DVERSION=\"07183cc-dirty\" -DFSOCK_HAVE_GCC=1 -DFSOCK_HAVE_LINUX=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_EVENTFD=1 -DFSOCK_HAVE_EVENTFD=1 -DHAVE_PIPE=1 -DFSOCK_HAVE_PIPE=1 -DHAVE_PIPE2=1 -DFSOCK_HAVE_PIPE2=1 -DFSOCK_HAVE_CLOCK_MONOTONIC=1 -DHAVE_LIBRT=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_POLL=1 -DFSOCK_HAVE_POLL=1 -DHAVE_EPOLL_CREATE=1 -DFSOCK_USE_EPOLL=1 -DHAVE_ACCEPT4=1 -DFSOCK_HAVE_ACCEPT4=1 -DFSOCK_HAVE_GETADDRINFO_A=1 -DFSOCK_HAVE_SOCKETPAIR=1 -DFSOCK_HAVE_SEMAPHORE=1 -DFSOCK_HAVE_GCC_ATOMIC_BUILTINS=1 -DFSOCK_HAVE_MSG_CONTROL=1 -DFSOCK_USE_EVENTFD=1 -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
 DEPDIR = .deps
 DLLTOOL = false
 DOLT_BASH = /bin/bash
@@ -493,7 +493,7 @@ EXEEXT =
 FGREP = /bin/grep -F
 FSOCK_ABI_VERSION = 0.1.0
 FSOCK_LIBTOOL_VERSION = 0:1:0
-FSOCK_PACKAGE_VERSION = a8cc015-dirty
+FSOCK_PACKAGE_VERSION = 07183cc-dirty
 GREP = /bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
@@ -510,7 +510,7 @@ LN_S = ln -s
 LTCOMPILE = $(top_builddir)/doltcompile $(COMPILE)
 LTCXXCOMPILE = $(top_builddir)/doltcompile $(CXXCOMPILE)
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /root/calismalar/framer-ev/nanomsg/missing makeinfo
+MAKEINFO = ${SHELL} /root/calismalar/fsocket/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -522,10 +522,10 @@ OTOOL64 =
 PACKAGE = fsocket
 PACKAGE_BUGREPORT = fsocket@freelists.org
 PACKAGE_NAME = fsocket
-PACKAGE_STRING = fsocket a8cc015-dirty
+PACKAGE_STRING = fsocket 07183cc-dirty
 PACKAGE_TARNAME = fsocket
 PACKAGE_URL = https://github.com/fatihky/fsocket
-PACKAGE_VERSION = a8cc015-dirty
+PACKAGE_VERSION = 07183cc-dirty
 PATH_SEPARATOR = :
 PTHREAD_CC = gcc -std=gnu99
 PTHREAD_CFLAGS = -pthread
@@ -535,11 +535,11 @@ SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-VERSION = a8cc015-dirty
-abs_builddir = /root/calismalar/framer-ev/nanomsg
-abs_srcdir = /root/calismalar/framer-ev/nanomsg
-abs_top_builddir = /root/calismalar/framer-ev/nanomsg
-abs_top_srcdir = /root/calismalar/framer-ev/nanomsg
+VERSION = 07183cc-dirty
+abs_builddir = /root/calismalar/fsocket
+abs_srcdir = /root/calismalar/fsocket
+abs_top_builddir = /root/calismalar/fsocket
+abs_top_srcdir = /root/calismalar/fsocket
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -569,7 +569,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /root/calismalar/framer-ev/nanomsg/install-sh
+install_sh = ${SHELL} /root/calismalar/fsocket/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -1792,13 +1792,13 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man7
 
 #.txt.1:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket a8cc015-dirty" $<
+#	-amanmanual="fsocket 07183cc-dirty" $<
 #.txt.3:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket a8cc015-dirty" $<
+#	-amanmanual="fsocket 07183cc-dirty" $<
 #.txt.7:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket a8cc015-dirty" $<
+#	-amanmanual="fsocket 07183cc-dirty" $<
 
 #.txt.1.html:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -d manpage -b html5 \
