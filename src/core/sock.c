@@ -204,28 +204,42 @@ void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
       fsock_mutex_unlock (&conn->sync);
       goto stop;
     }
-  
-    struct iovec iovs[128];
-    int retiovcnt = -1;
-    ssize_t tow = frm_out_frame_list_get_iovs (&conn->ol, iovs, 128, &retiovcnt);
-  
-    /*  unlock mutex and do synchronous operation */
+
+    struct frm_out_frame_list ol;
+    /*  Get local copy of the out frame list of the socket. */
+    memcpy(&ol, &conn->ol, sizeof (struct frm_out_frame_list));
+    frm_out_frame_list_init (&conn->ol);
     fsock_mutex_unlock (&conn->sync);
-  
-    ssize_t nw = writev (w->fd, iovs, retiovcnt);
-  
-    if (nw < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-      return;
+    while (!frm_list_empty (&ol.list)) {
+      struct iovec iovs[128];
+      int retiovcnt = -1;
+      ssize_t tow = frm_out_frame_list_get_iovs (&ol, iovs, 128, &retiovcnt);
+      ssize_t nw = writev (w->fd, iovs, retiovcnt);
+
+      if (nw < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        /*  todo: merge current copy with old copy. */
+        fsock_mutex_lock (&conn->sync);
+        if (!frm_list_empty (&conn->ol.list)) {
+          /*  new frame added to the out list */
+          if (ol.list.last) {
+            ol.list.last->next = conn->ol.list.first;
+            conn->ol.list.first->prev = ol.list.last;
+          }
+          else {
+            ol.list.first->next = conn->ol.list.first;
+            conn->ol.list.first->prev = ol.list.first;
+          }
+        }
+        memcpy(&conn->ol, &ol, sizeof (struct frm_out_frame_list));
+        fsock_mutex_unlock (&conn->sync);
+        return;
+      }
+      if (nw <= 0) {
+        printf ("nw: %zd\n", nw);
+        goto stop;
+      }
+      frm_out_frame_list_written (&ol, nw);
     }
-  
-    if (nw <= 0) {
-      printf ("nw: %zd\n", nw);
-      goto stop;
-    }
-  
-    fsock_mutex_lock (&conn->sync);
-    frm_out_frame_list_written (&conn->ol, nw);
-    fsock_mutex_unlock (&conn->sync);
   }
 
   return;
