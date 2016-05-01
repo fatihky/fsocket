@@ -1,3 +1,6 @@
+# ignore makefile, because it is generated automatically
+Makefile
+
 .*/
 build/
 *.a

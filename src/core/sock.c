@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <unistd.h>
 #include <framer/cont.h>
+#include "../core/global.h"
 #include "../utils/queue.h"
+#include "../utils/anet.h"
+#include "../utils/glock.h"
 #include "sock.h"
 #include "../fsock.h"
 
@@ -142,7 +146,7 @@ void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents) {
   printf ("notify socket about this event or do not like zeromq {socket: %d|%d}\n", sock->idx, sock->uniq);
 }
 
-static void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
+void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
   struct fsock_sock *conn = frm_cont (r, struct fsock_sock, rio);
   assert (conn->fd == r->fd);
 
@@ -190,7 +194,7 @@ clean:
   frm_cbuf_unref (cbuf);
 }
 
-static void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
+void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   struct fsock_sock *conn = frm_cont (w, struct fsock_sock, wio);
   assert (conn->fd == w->fd);
 

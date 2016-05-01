@@ -10,7 +10,6 @@
 #include "../core/sock.h"
 #include "../fsock.h"
 #include "../core/global.h"
-#include "anet.h"
 #include "glock.h"
 
 #define FSOCK_THR_BIND 9927400

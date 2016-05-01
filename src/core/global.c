@@ -198,7 +198,7 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
 }
 
 static inline int fsock_conn_type(struct fsock_sock *sock, int c) {
-  return sock->cons.elems[c]->type;
+  return ((struct fsock_sock *)sock->conns.elems[c])->type;
 }
 
 static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr, int dflags,
@@ -218,8 +218,8 @@ static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr,
       ((dflags & FSOCK_DIST_OUT) && /*  Send to only outgoing conns. */
         fsock_conn_type(sock, index) == FSOCK_SOCK_OUT)) {
 
-      rc = fsock_send(s, index, sndflags);
-      if (rc != 0 && !(flags & FSOCK_NOSTOP_ONERR))
+      rc = fsock_send(s, index, fr, sndflags);
+      if (rc != 0 && !(sndflags & FSOCK_NOSTOP_ONERR))
         break;
     }
   }

@@ -48,6 +48,6 @@ int fsock_sock_queue_event (struct fsock_sock *self, int type,
   struct frm_frame *fr, int conn);
 
 /*  i/o handlers */
-static void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents);
-static void fsock_sock_read_handler (EV_P_ ev_io *r, int revents);
-static void fsock_sock_write_handler (EV_P_ ev_io *w, int revents);
+void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents);
+void fsock_sock_read_handler (EV_P_ ev_io *r, int revents);
+void fsock_sock_write_handler (EV_P_ ev_io *w, int revents);
