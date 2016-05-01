@@ -20,7 +20,6 @@ static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
       printf ("FSOCK_STOP_READ\n");
     } break;
     case FSOCK_START_WRITE: {
-      printf ("start writing.\n");
       sock = frm_cont (task, struct fsock_sock, t_start_write);
       ev_io_start (thr->loop, &sock->wio);
     } break;
@@ -201,7 +200,6 @@ void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   fsock_mutex_lock (&conn->sync);
 
   if (frm_list_empty (&conn->ol.list)) {
-    printf ("All frames are written.\n");
     fsock_mutex_unlock (&conn->sync);
     goto stop;
   }
@@ -229,7 +227,6 @@ void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   fsock_mutex_unlock (&conn->sync);
 
   return;
-
 stop:
   ev_io_stop (EV_A_ w);
   fsock_mutex_lock (&conn->sync);
