@@ -82,104 +82,104 @@ extern "C" {
 
 /*  A number random enough not to collide with different errno ranges on      */
 /*  different OSes. The assumption is that error_t is at least 32-bit type.   */
-#define NN_HAUSNUMERO 35417552
+#define FSOCK_HAUSNUMERO 35417552
 
 /*  On some platforms some standard POSIX errnos are not defined.    */
 #ifndef ENOTSUP
-#define ENOTSUP (NN_HAUSNUMERO + 1)
+#define ENOTSUP (FSOCK_HAUSNUMERO + 1)
 #endif
 #ifndef EPROTONOSUPPORT
-#define EPROTONOSUPPORT (NN_HAUSNUMERO + 2)
+#define EPROTONOSUPPORT (FSOCK_HAUSNUMERO + 2)
 #endif
 #ifndef ENOBUFS
-#define ENOBUFS (NN_HAUSNUMERO + 3)
+#define ENOBUFS (FSOCK_HAUSNUMERO + 3)
 #endif
 #ifndef ENETDOWN
-#define ENETDOWN (NN_HAUSNUMERO + 4)
+#define ENETDOWN (FSOCK_HAUSNUMERO + 4)
 #endif
 #ifndef EADDRINUSE
-#define EADDRINUSE (NN_HAUSNUMERO + 5)
+#define EADDRINUSE (FSOCK_HAUSNUMERO + 5)
 #endif
 #ifndef EADDRNOTAVAIL
-#define EADDRNOTAVAIL (NN_HAUSNUMERO + 6)
+#define EADDRNOTAVAIL (FSOCK_HAUSNUMERO + 6)
 #endif
 #ifndef ECONNREFUSED
-#define ECONNREFUSED (NN_HAUSNUMERO + 7)
+#define ECONNREFUSED (FSOCK_HAUSNUMERO + 7)
 #endif
 #ifndef EINPROGRESS
-#define EINPROGRESS (NN_HAUSNUMERO + 8)
+#define EINPROGRESS (FSOCK_HAUSNUMERO + 8)
 #endif
 #ifndef ENOTSOCK
-#define ENOTSOCK (NN_HAUSNUMERO + 9)
+#define ENOTSOCK (FSOCK_HAUSNUMERO + 9)
 #endif
 #ifndef EAFNOSUPPORT
-#define EAFNOSUPPORT (NN_HAUSNUMERO + 10)
+#define EAFNOSUPPORT (FSOCK_HAUSNUMERO + 10)
 #endif
 #ifndef EPROTO
-#define EPROTO (NN_HAUSNUMERO + 11)
+#define EPROTO (FSOCK_HAUSNUMERO + 11)
 #endif
 #ifndef EAGAIN
-#define EAGAIN (NN_HAUSNUMERO + 12)
+#define EAGAIN (FSOCK_HAUSNUMERO + 12)
 #endif
 #ifndef EBADF
-#define EBADF (NN_HAUSNUMERO + 13)
+#define EBADF (FSOCK_HAUSNUMERO + 13)
 #endif
 #ifndef EINVAL
-#define EINVAL (NN_HAUSNUMERO + 14)
+#define EINVAL (FSOCK_HAUSNUMERO + 14)
 #endif
 #ifndef EMFILE
-#define EMFILE (NN_HAUSNUMERO + 15)
+#define EMFILE (FSOCK_HAUSNUMERO + 15)
 #endif
 #ifndef EFAULT
-#define EFAULT (NN_HAUSNUMERO + 16)
+#define EFAULT (FSOCK_HAUSNUMERO + 16)
 #endif
 #ifndef EACCES
-#define EACCES (NN_HAUSNUMERO + 17)
+#define EACCES (FSOCK_HAUSNUMERO + 17)
 #endif
 #ifndef EACCESS
 #define EACCESS (EACCES)
 #endif
 #ifndef ENETRESET
-#define ENETRESET (NN_HAUSNUMERO + 18)
+#define ENETRESET (FSOCK_HAUSNUMERO + 18)
 #endif
 #ifndef ENETUNREACH
-#define ENETUNREACH (NN_HAUSNUMERO + 19)
+#define ENETUNREACH (FSOCK_HAUSNUMERO + 19)
 #endif
 #ifndef EHOSTUNREACH
-#define EHOSTUNREACH (NN_HAUSNUMERO + 20)
+#define EHOSTUNREACH (FSOCK_HAUSNUMERO + 20)
 #endif
 #ifndef ENOTCONN
-#define ENOTCONN (NN_HAUSNUMERO + 21)
+#define ENOTCONN (FSOCK_HAUSNUMERO + 21)
 #endif
 #ifndef EMSGSIZE
-#define EMSGSIZE (NN_HAUSNUMERO + 22)
+#define EMSGSIZE (FSOCK_HAUSNUMERO + 22)
 #endif
 #ifndef ETIMEDOUT
-#define ETIMEDOUT (NN_HAUSNUMERO + 23)
+#define ETIMEDOUT (FSOCK_HAUSNUMERO + 23)
 #endif
 #ifndef ECONNABORTED
-#define ECONNABORTED (NN_HAUSNUMERO + 24)
+#define ECONNABORTED (FSOCK_HAUSNUMERO + 24)
 #endif
 #ifndef ECONNRESET
-#define ECONNRESET (NN_HAUSNUMERO + 25)
+#define ECONNRESET (FSOCK_HAUSNUMERO + 25)
 #endif
 #ifndef ENOPROTOOPT
-#define ENOPROTOOPT (NN_HAUSNUMERO + 26)
+#define ENOPROTOOPT (FSOCK_HAUSNUMERO + 26)
 #endif
 #ifndef EISCONN
-#define EISCONN (NN_HAUSNUMERO + 27)
+#define EISCONN (FSOCK_HAUSNUMERO + 27)
 #define NN_EISCONN_DEFINED
 #endif
 #ifndef ESOCKTNOSUPPORT
-#define ESOCKTNOSUPPORT (NN_HAUSNUMERO + 28)
+#define ESOCKTNOSUPPORT (FSOCK_HAUSNUMERO + 28)
 #endif
 
 /*  Native nanomsg error codes.                                               */
 #ifndef ETERM
-#define ETERM (NN_HAUSNUMERO + 53)
+#define ETERM (FSOCK_HAUSNUMERO + 53)
 #endif
 #ifndef EFSM
-#define EFSM (NN_HAUSNUMERO + 54)
+#define EFSM (FSOCK_HAUSNUMERO + 54)
 #endif
 
 /*  This function retrieves the errno as it is known to the library.          */
