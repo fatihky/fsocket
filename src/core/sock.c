@@ -204,9 +204,9 @@ void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
     goto stop;
   }
 
-  struct iovec iovs[512];
+  struct iovec iovs[128];
   int retiovcnt = -1;
-  ssize_t tow = frm_out_frame_list_get_iovs (&conn->ol, iovs, 512, &retiovcnt);
+  ssize_t tow = frm_out_frame_list_get_iovs (&conn->ol, iovs, 128, &retiovcnt);
 
   /*  unlock mutex and do synchronous operation */
   fsock_mutex_unlock (&conn->sync);
