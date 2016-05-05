@@ -176,7 +176,7 @@ int fsock_connect (int s, char *addr, int port) {
 struct fsock_event *fsock_get_event (int s, int flags) {
   struct fsock_sock *sock;
   sock = self.socks.elems[s];
-  assert (sock->type == FSOCK_SOCK_BASE);
+  assert (sock && sock->type == FSOCK_SOCK_BASE);
   fsock_mutex_lock(&sock->sync);
   if (fsock_queue_empty (&sock->events)) {
     if (flags & FSOCK_DONWAIT) {
@@ -220,9 +220,9 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   struct fsock_sock *sock;
   struct fsock_sock *conn;
   sock = self.socks.elems[s];
-  conn = sock->conns.elems[c];
-  assert (sock->type == FSOCK_SOCK_BASE);
+  assert (sock && sock->type == FSOCK_SOCK_BASE);
   assert (fr && "you should pass a frame to send");
+  conn = sock->conns.elems[c];
   if (conn->flags & FSOCK_SOCK_ZOMBIE) {
     errno = EINVAL;
     return -1;

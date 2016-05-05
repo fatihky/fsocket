@@ -29,6 +29,11 @@ struct fsock_sock {
   int writing;
   int reading;
   int want_efd;
+  /*  highwatermarks */
+  int sndhwm;
+  int rcvhwm;
+  int sndqsz;
+  int rcvqsz;
   struct nn_efd efd;
   struct fsock_queue events;
   struct fsock_sock *owner;

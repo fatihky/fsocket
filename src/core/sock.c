@@ -10,6 +10,9 @@
 #include "sock.h"
 #include "../fsock.h"
 
+#define FSOCK_SOCK_HWM_DEFAULT 1000
+#define FSOCK_SOCK_HWM_FULL -1
+
 static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
   struct fsock_sock *sock;
   switch (task->type) {
@@ -47,6 +50,10 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   self->uniq = rand();
   self->reading = 0;
   self->writing = 0;
+  self->sndhwm = FSOCK_SOCK_HWM_DEFAULT;
+  self->rcvhwm = FSOCK_SOCK_HWM_DEFAULT;
+  self->sndqsz = 0;
+  self->rcvqsz = 0;
   nn_efd_init (&self->efd);
   frm_parser_init (&self->parser);
   frm_out_frame_list_init (&self->ol);
@@ -136,6 +143,28 @@ int fsock_sock_queue_event (struct fsock_sock *self, int type,
   return 0;
 }
 
+int fsock_queue_event (struct fsock_queue *queue, int type,
+    struct frm_frame *fr, int conn) {
+  struct fsock_event *event = malloc (sizeof (struct fsock_event));
+  if (!event)
+    return ENOMEM;
+  event->type = type;
+  switch (type) {
+    case FSOCK_EVENT_NEW_CONN:
+      event->conn = conn; break;
+    case FSOCK_EVENT_NEW_FRAME:
+      event->frame = fr; break;
+    default:
+      printf ("[fsock_sock_queue_event] unknown event type: %d\n", type);
+      free (event);
+      assert (0);
+      return -1;
+  }
+  fsock_queue_item_init (&event->item);
+  fsock_queue_push (queue, &event->item);
+  return 0;
+}
+
 void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents) {
   printf ("accept new connection\n");
   char err[255];
@@ -216,6 +245,9 @@ void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
     goto stop;
   }
 
+  struct fsock_queue queue = {NULL, NULL};
+  int cnt;
+
   while (!frm_list_empty (&conn->parser.in_frames)) {
     struct frm_list_item *li = frm_list_begin (&conn->parser.in_frames);
 
@@ -228,8 +260,33 @@ void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
     struct frm_frame *fr = frm_cont (li, struct frm_frame, item);
 
     // frm_frame_destroy (fr);
-    fsock_sock_queue_event (conn->owner, FSOCK_EVENT_NEW_FRAME, fr, -1);
+    //fsock_sock_queue_event (conn->owner, FSOCK_EVENT_NEW_FRAME, fr, -1);
+    int rc = fsock_queue_event (&queue, FSOCK_EVENT_NEW_FRAME, fr, -1);
+    if (rc != 0) break;
+    cnt++;
   }
+
+  struct fsock_sock *owner = conn->owner;
+  fsock_mutex_lock (&conn->owner->sync);
+  owner->sndqsz += cnt;
+  //if (owner->sndqsz >= owner->sndhwm)
+  //  ev_io_stop (EV_P_ r);
+  if (cnt > 0) {
+    if (owner->events.tail)
+      owner->events.tail = queue.head;
+    else if (owner->events.head) {
+      owner->events.head->next = queue.head;
+      owner->events.tail = queue.tail;
+    } else {
+      owner->events.head = queue.head;
+      owner->events.tail = queue.tail;
+    }
+    if (owner->want_efd == 1) {
+      nn_efd_signal (&owner->efd);
+      owner->want_efd = 0;
+    }
+  }
+  fsock_mutex_unlock (&owner->sync);
 
   goto clean;
 
