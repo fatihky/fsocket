@@ -106,4 +106,3 @@ int fsock_queue_item_isinqueue (struct fsock_queue_item *self)
 {
     return self->next == FSOCK_QUEUE_NOTINQUEUE ? 0 : 1;
 }
-

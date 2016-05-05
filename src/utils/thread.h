@@ -30,11 +30,11 @@ struct fsock_thread {
 
 void fsock_task_init (struct fsock_task *self, int type, fsock_task_fn fn,
   void *data);
-void fsock_task_term (struct fsock_task *self, int type, fsock_task_fn fn,
-  void *data);
+void fsock_task_term (struct fsock_task *self);
 
 struct fsock_thread *fsock_thread_new();
 void fsock_thread_init (struct fsock_thread *self);
+void fsock_thread_term (struct fsock_thread *self);
 void fsock_thread_start (struct fsock_thread *self);
 void fsock_thread_join (struct fsock_thread *self);
 

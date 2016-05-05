@@ -36,6 +36,18 @@ static int fsock_global_init() {
   return 0;
 }
 
+static void fsock_global_term() {
+  if (!g_initialized)
+    return;
+  // close all worker threads
+  for (int i = 0; i < 4; i++) {
+    fsock_thread_join (&self.threads[i]);
+    fsock_thread_term (&self.threads[i]);
+  }
+  fsock_parr_term (&self.socks);
+  g_initialized = 0;
+}
+
 #define FSOCK_GLOBAL_INIT() do { \
   if (!g_initialized) {          \
     rc = fsock_global_init();    \
@@ -71,10 +83,31 @@ int fsock_socket (char *name) {
   return index;
 }
 
+int fsock_close (int s) {
+  if (!g_initialized)
+    return EINVAL;
+
+  int rc = 0;
+  int term = 0;
+  fsock_glock_lock();
+  assert (s >= 0 && s < self.socks.last);
+  assert (self.socks.elems[s] != FSOCK_PARR_EMPTY);
+  struct fsock_sock *sock = self.socks.elems[s];
+  rc = fsock_parr_clear (&self.socks, s);
+  assert (rc == 0);
+  if (fsock_parr_size(&self.socks) == 0)
+    term = 1;
+  fsock_glock_unlock();
+  fsock_sock_term (sock);
+  free (sock);
+  if (term)
+    fsock_global_term();
+}
+
 int fsock_bind (int s, char *addr, int port) {
-  struct fsock_sock *sock;
+  struct fsock_sock *sock = NULL;
   struct fsock_sock *bnd = malloc (sizeof (struct fsock_sock));
-  struct fsock_thread *thr;
+  struct fsock_thread *thr = NULL;
   char err[255] = {0};
   int fd;
   int index;

@@ -22,6 +22,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <framer/err.h>
 
@@ -35,6 +36,7 @@ void fsock_parr_init (struct fsock_parr *self, int increment) {
 }
 
 void fsock_parr_term (struct fsock_parr *self) {
+  assert (fsock_parr_size (self) == 0);
   if (self->elems)
     free (self->elems);
 }

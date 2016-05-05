@@ -33,9 +33,8 @@ void fsock_task_init (struct fsock_task *self, int type, fsock_task_fn fn,
   fsock_queue_item_init (&self->item);
 }
 
-void fsock_task_term (struct fsock_task *self, int type, fsock_task_fn fn,
-    void *data) {
-  // do nothing
+void fsock_task_term (struct fsock_task *self) {
+  assert (!fsock_queue_item_isinqueue (&self->item));
 }
 
 struct fsock_thread *fsock_thread_new() {
@@ -58,13 +57,21 @@ void fsock_thread_init (struct fsock_thread *self) {
   ev_async_start (self->loop, &self->job_async);
 }
 
+void fsock_thread_term (struct fsock_thread *self) {
+  ev_loop_destroy (self->loop);
+  fsock_mutex_term (&self->sync);
+  fsock_queue_term (&self->jobs);
+  fsock_task_term (&self->stop);
+}
+
 void fsock_thread_start (struct fsock_thread *self) {
-  pthread_create(&self->thread, NULL, thread_routine, self);
+  pthread_create (&self->thread, NULL, thread_routine, self);
   return;
 }
 
 void fsock_thread_join (struct fsock_thread *self) {
   fsock_thread_schedule_task (self, &self->stop);
+  pthread_join (self->thread, NULL);
 }
 
 void fsock_thread_schedule_task (struct fsock_thread *self,
@@ -87,7 +94,6 @@ static void async_routine (EV_P_ ev_async *a, int revents) {
   struct fsock_task *task;
   while (item = fsock_queue_pop (&jobs)) {
     if (item == &self->stop.item) {
-      printf ("stop thread\n");
       while (item = fsock_queue_pop (&jobs));
       ev_break (EV_A_ EVBREAK_ALL);
       return;
@@ -114,28 +120,19 @@ static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
       printf ("listen on: %s:%d {sock: %d|%d}\n", data->addr, data->port, sock->idx, sock->uniq);
       ev_io_init (&sock->rio, fsock_sock_accept_handler, sock->fd, EV_READ);
       ev_io_start (thr->loop, &sock->rio);
+      free (data->addr);
+      free (data);
+      free (task);
     } break;
     case FSOCK_THR_CONN: {
       printf ("start i/o for conn\n");
       ev_io_init (&sock->rio, fsock_sock_read_handler, sock->fd, EV_READ);
       ev_io_init (&sock->wio, fsock_sock_write_handler, sock->fd, EV_WRITE);
       ev_io_start (thr->loop, &sock->rio);
+      free (data);
+      free (task);
       if (sock->type == FSOCK_SOCK_OUT) {
         printf ("bu bir dış bağlantı\n");
-        struct frm_frame *frs = calloc(3, sizeof(struct frm_frame));
-        for (int i = 0; i < 3; i++) {
-          struct frm_out_frame_list_item *li = frm_out_frame_list_item_new();
-      
-          struct frm_frame *fr = &frs[i];
-          frm_frame_init (fr);
-          frm_frame_set_data (fr, "fatih", 5);
-          frm_out_frame_list_item_set_frame (li, fr);
-          frm_out_frame_list_insert (&sock->ol, li);
-      
-          // bu frame'i daha fazla kullanmayacağım
-          frm_frame_term (fr);
-        }
-        ev_io_start (thr->loop, &sock->wio);
       }
     } break;
     default:

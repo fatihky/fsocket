@@ -50,8 +50,8 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   nn_efd_init (&self->efd);
   frm_parser_init (&self->parser);
   frm_out_frame_list_init (&self->ol);
-  fsock_parr_init (&self->conns, 10);
   fsock_parr_init (&self->binds, 10);
+  fsock_parr_init (&self->conns, 10);
   fsock_queue_init (&self->events);
   fsock_mutex_init (&self->sync);
   fsock_task_init (&self->t_start_read, FSOCK_START_READ, task_routine, NULL);
@@ -59,6 +59,52 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   fsock_task_init (&self->t_start_write, FSOCK_START_WRITE, task_routine, NULL);
   fsock_task_init (&self->t_stop_write, FSOCK_STOP_WRITE, task_routine, NULL);
   fsock_task_init (&self->t_close, FSOCK_CLOSE, task_routine, NULL);
+}
+
+static void fsock_sock_conn_parr_term (struct fsock_sock *self, struct fsock_parr *parr) {
+  int i = -1;
+  void *ptr = fsock_parr_begin (parr, &i);
+
+  for (; ptr != fsock_parr_end (parr); ptr = fsock_parr_next (parr, &i)) {
+    struct fsock_sock *conn = (struct fsock_sock *)parr->elems[i];
+    if (conn->type == FSOCK_SOCK_IN)
+      fsock_parr_clear (&self->conns, conn->idx);
+    fsock_sock_term (conn);
+    free (conn);
+    fsock_parr_clear (parr, i);
+  }
+}
+
+static void fsock_sock_bind_parr_term (struct fsock_sock *self, struct fsock_parr *parr) {
+  int i = -1;
+  void *ptr = fsock_parr_begin (parr, &i);
+
+  for (; ptr != fsock_parr_end (parr); ptr = fsock_parr_next (parr, &i)) {
+    struct fsock_sock *bnd = (struct fsock_sock *)parr->elems[i];
+    fsock_sock_conn_parr_term (self, &bnd->conns);
+    fsock_sock_term (bnd);
+    free (bnd);
+    fsock_parr_clear (parr, i);
+  }
+}
+
+void fsock_sock_term (struct fsock_sock *self) {
+  if (self->fd != -1)
+    close (self->fd);
+  nn_efd_term (&self->efd);
+  frm_parser_term (&self->parser);
+  frm_out_frame_list_term (&self->ol);
+  fsock_sock_bind_parr_term (self, &self->binds);
+  fsock_sock_conn_parr_term (self, &self->conns);
+  fsock_parr_term (&self->binds);
+  fsock_parr_term (&self->conns);
+  fsock_queue_term (&self->events);
+  fsock_mutex_term (&self->sync);
+  fsock_task_term (&self->t_start_read);
+  fsock_task_term (&self->t_stop_read);
+  fsock_task_term (&self->t_start_write);
+  fsock_task_term (&self->t_stop_write);
+  fsock_task_term (&self->t_close);
 }
 
 int fsock_sock_queue_event (struct fsock_sock *self, int type,

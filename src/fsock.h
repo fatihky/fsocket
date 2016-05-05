@@ -219,6 +219,7 @@ struct fsock_event {
 #define FSOCK_DIST_OUT 2  /*  Distribute only to outgoing connections.        */
 
 int fsock_socket (char *name);
+int fsock_close (int s);
 int fsock_bind (int s, char *addr, int port);
 int fsock_connect (int s, char *addr, int port);
 struct fsock_event *fsock_get_event (int s, int flags);
