@@ -182,6 +182,11 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   conn = sock->conns.elems[c];
   assert (sock->type == FSOCK_SOCK_BASE);
   assert (fr && "you should pass a frame to send");
+  if (conn->flags & FSOCK_SOCK_ZOMBIE) {
+    errno = EINVAL;
+    return -1;
+  }
+
   struct frm_out_frame_list_item *li = frm_out_frame_list_item_new();
   if (!li) {
     errno = ENOMEM;
@@ -197,7 +202,7 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   fsock_mutex_unlock(&conn->sync);
 }
 
-static inline int fsock_conn_type(struct fsock_sock *sock, int c) {
+static inline int fsock_conn_type (struct fsock_sock *sock, int c) {
   return ((struct fsock_sock *)sock->conns.elems[c])->type;
 }
 
@@ -218,7 +223,7 @@ static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr,
       ((dflags & FSOCK_DIST_OUT) && /*  Send to only outgoing conns. */
         fsock_conn_type(sock, index) == FSOCK_SOCK_OUT)) {
 
-      rc = fsock_send(s, index, fr, sndflags);
+      rc = fsock_send (s, index, fr, sndflags);
       if (rc != 0 && !(sndflags & FSOCK_NOSTOP_ONERR))
         break;
     }

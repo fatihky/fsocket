@@ -39,6 +39,7 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   self->idx = -1; /*  used for debugging */
   self->idxlocal = -1;
   self->type = type;
+  self->flags = 0;
   self->fd = -1;
   self->owner = NULL;
   self->thr = NULL;
@@ -189,6 +190,13 @@ void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
 stop:
   printf ("bağlantı koptu.\n");
   ev_io_stop (EV_A_ r);
+  ev_io_stop (EV_A_ &conn->wio);
+  fsock_mutex_lock (&conn->sync);
+  if (!(conn->flags & FSOCK_SOCK_ZOMBIE)) {
+    conn->flags |= FSOCK_SOCK_ZOMBIE;
+    printf ("conn->flags: %d FSOCK_SOCK_ZOMBIE: %d\n", conn->flags, FSOCK_SOCK_ZOMBIE);
+  }
+  fsock_mutex_unlock (&conn->sync);
 clean:
   frm_cbuf_unref (cbuf);
 }
@@ -196,6 +204,9 @@ clean:
 void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   struct fsock_sock *conn = frm_cont (w, struct fsock_sock, wio);
   assert (conn->fd == w->fd);
+
+  if (conn->flags & FSOCK_SOCK_ZOMBIE)
+    return;
 
   for (;;) {
     fsock_mutex_lock (&conn->sync);

@@ -15,8 +15,13 @@
 #define FSOCK_STOP_WRITE 4
 #define FSOCK_CLOSE 5
 
+/*  socket flags */
+#define FSOCK_SOCK_ACTIVE 1
+#define FSOCK_SOCK_ZOMBIE 2 /*  connection closed */
+
 struct fsock_sock {
   int type;
+  int flags;
   int fd;
   int uniq;
   ev_io rio;
