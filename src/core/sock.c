@@ -239,12 +239,14 @@ void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
 
   struct fsock_sock *owner = conn->owner;
   fsock_mutex_lock (&conn->owner->sync);
-  owner->sndqsz += cnt;
+  owner->rcvqsz += cnt;
   //if (owner->sndqsz >= owner->sndhwm)
   //  ev_io_stop (EV_P_ r);
   if (cnt > 0) {
-    if (owner->events.tail)
-      owner->events.tail = queue.head;
+    if (owner->events.tail) {
+      owner->events.tail->next = queue.head;
+      owner->events.tail = queue.tail;
+    }
     else if (owner->events.head) {
       owner->events.head->next = queue.head;
       owner->events.tail = queue.tail;
