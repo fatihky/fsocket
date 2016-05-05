@@ -55,8 +55,6 @@ struct fsock_sock {
 
 void fsock_sock_init (struct fsock_sock *self, int type);
 void fsock_sock_term (struct fsock_sock *self);
-int fsock_sock_queue_event (struct fsock_sock *self, int type,
-  struct frm_frame *fr, int conn);
 
 /*  i/o handlers */
 void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents);
