@@ -478,7 +478,7 @@ CFLAGS = -g -O2 -pthread
 CPP = gcc -std=gnu99 -E
 CPPFLAGS =  -D_GNU_SOURCE -D_GNU_SOURCE -D_GNU_SOURCE
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"fsocket\" -DPACKAGE_TARNAME=\"fsocket\" -DPACKAGE_VERSION=\"5cb28e1-dirty\" -DPACKAGE_STRING=\"fsocket\ 5cb28e1-dirty\" -DPACKAGE_BUGREPORT=\"fsocket@freelists.org\" -DPACKAGE_URL=\"https://github.com/fatihky/fsocket\" -DPACKAGE=\"fsocket\" -DVERSION=\"5cb28e1-dirty\" -DFSOCK_HAVE_GCC=1 -DFSOCK_HAVE_LINUX=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_EVENTFD=1 -DFSOCK_HAVE_EVENTFD=1 -DHAVE_PIPE=1 -DFSOCK_HAVE_PIPE=1 -DHAVE_PIPE2=1 -DFSOCK_HAVE_PIPE2=1 -DFSOCK_HAVE_CLOCK_MONOTONIC=1 -DHAVE_LIBRT=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_POLL=1 -DFSOCK_HAVE_POLL=1 -DHAVE_EPOLL_CREATE=1 -DFSOCK_USE_EPOLL=1 -DHAVE_ACCEPT4=1 -DFSOCK_HAVE_ACCEPT4=1 -DFSOCK_HAVE_GETADDRINFO_A=1 -DFSOCK_HAVE_SOCKETPAIR=1 -DFSOCK_HAVE_SEMAPHORE=1 -DFSOCK_HAVE_GCC_ATOMIC_BUILTINS=1 -DFSOCK_HAVE_MSG_CONTROL=1 -DFSOCK_USE_EVENTFD=1 -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
+DEFS = -DPACKAGE_NAME=\"fsocket\" -DPACKAGE_TARNAME=\"fsocket\" -DPACKAGE_VERSION=\"b5951aa-dirty\" -DPACKAGE_STRING=\"fsocket\ b5951aa-dirty\" -DPACKAGE_BUGREPORT=\"fsocket@freelists.org\" -DPACKAGE_URL=\"https://github.com/fatihky/fsocket\" -DPACKAGE=\"fsocket\" -DVERSION=\"b5951aa-dirty\" -DFSOCK_HAVE_GCC=1 -DFSOCK_HAVE_LINUX=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_EVENTFD=1 -DFSOCK_HAVE_EVENTFD=1 -DHAVE_PIPE=1 -DFSOCK_HAVE_PIPE=1 -DHAVE_PIPE2=1 -DFSOCK_HAVE_PIPE2=1 -DFSOCK_HAVE_CLOCK_MONOTONIC=1 -DHAVE_LIBRT=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_POLL=1 -DFSOCK_HAVE_POLL=1 -DHAVE_EPOLL_CREATE=1 -DFSOCK_USE_EPOLL=1 -DHAVE_ACCEPT4=1 -DFSOCK_HAVE_ACCEPT4=1 -DFSOCK_HAVE_GETADDRINFO_A=1 -DFSOCK_HAVE_SOCKETPAIR=1 -DFSOCK_HAVE_SEMAPHORE=1 -DFSOCK_HAVE_GCC_ATOMIC_BUILTINS=1 -DFSOCK_HAVE_MSG_CONTROL=1 -DFSOCK_USE_EVENTFD=1 -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
 DEPDIR = .deps
 DLLTOOL = false
 DOLT_BASH = /bin/bash
@@ -493,7 +493,7 @@ EXEEXT =
 FGREP = /bin/grep -F
 FSOCK_ABI_VERSION = 0.1.0
 FSOCK_LIBTOOL_VERSION = 0:1:0
-FSOCK_PACKAGE_VERSION = 5cb28e1-dirty
+FSOCK_PACKAGE_VERSION = b5951aa-dirty
 GREP = /bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
@@ -522,10 +522,10 @@ OTOOL64 =
 PACKAGE = fsocket
 PACKAGE_BUGREPORT = fsocket@freelists.org
 PACKAGE_NAME = fsocket
-PACKAGE_STRING = fsocket 5cb28e1-dirty
+PACKAGE_STRING = fsocket b5951aa-dirty
 PACKAGE_TARNAME = fsocket
 PACKAGE_URL = https://github.com/fatihky/fsocket
-PACKAGE_VERSION = 5cb28e1-dirty
+PACKAGE_VERSION = b5951aa-dirty
 PATH_SEPARATOR = :
 PTHREAD_CC = gcc -std=gnu99
 PTHREAD_CFLAGS = -pthread
@@ -535,7 +535,7 @@ SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-VERSION = 5cb28e1-dirty
+VERSION = b5951aa-dirty
 abs_builddir = /root/calismalar/fsocket
 abs_srcdir = /root/calismalar/fsocket
 abs_top_builddir = /root/calismalar/fsocket
@@ -609,7 +609,8 @@ EXTRA_DIST = doc/stylesheet.css $(MAN1) $(MAN3) $(MAN7) \
 ################################################################################
 fsockincludedir = $(includedir)/fsocket
 fsockinclude_HEADERS = \
-		src/fsock.h
+		src/fsock.h \
+		src/utils/queue.h
 
 lib_LTLIBRARIES = libfsocket.la
 FSOCK_CORE = \
@@ -1792,13 +1793,13 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man7
 
 #.txt.1:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket 5cb28e1-dirty" $<
+#	-amanmanual="fsocket b5951aa-dirty" $<
 #.txt.3:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket 5cb28e1-dirty" $<
+#	-amanmanual="fsocket b5951aa-dirty" $<
 #.txt.7:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket 5cb28e1-dirty" $<
+#	-amanmanual="fsocket b5951aa-dirty" $<
 
 #.txt.1.html:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -d manpage -b html5 \

@@ -31,7 +31,8 @@ EXTRA_DIST =
 
 fsockincludedir = $(includedir)/fsocket
 fsockinclude_HEADERS = \
-		src/fsock.h
+		src/fsock.h \
+		src/utils/queue.h
 
 lib_LTLIBRARIES = libfsocket.la
 
