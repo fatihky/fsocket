@@ -114,35 +114,6 @@ void fsock_sock_term (struct fsock_sock *self) {
   fsock_task_term (&self->t_close);
 }
 
-int fsock_sock_queue_event (struct fsock_sock *self, int type,
-    struct frm_frame *fr, int conn) {
-  struct fsock_event *event = malloc (sizeof (struct fsock_event));
-  if (!event)
-    return ENOMEM;
-  assert (self->type == FSOCK_SOCK_BASE);
-  event->type = type;
-  switch (type) {
-    case FSOCK_EVENT_NEW_CONN:
-      event->conn = conn; break;
-    case FSOCK_EVENT_NEW_FRAME:
-      event->frame = fr; break;
-    default:
-      printf ("[fsock_sock_queue_event] unknown event type: %d\n", type);
-      free (event);
-      assert (0);
-      return -1;
-  }
-  fsock_queue_item_init (&event->item);
-  fsock_mutex_lock (&self->sync);
-  if (self->want_efd == 1) {
-    nn_efd_signal (&self->efd);
-    self->want_efd = 0;
-  }
-  fsock_queue_push (&self->events, &event->item);
-  fsock_mutex_unlock (&self->sync);
-  return 0;
-}
-
 int fsock_queue_event (struct fsock_queue *queue, int type,
     struct frm_frame *fr, int conn) {
   struct fsock_event *event = malloc (sizeof (struct fsock_event));
