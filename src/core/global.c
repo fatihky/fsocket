@@ -204,6 +204,14 @@ struct fsock_event *fsock_get_event (int s, int flags) {
   return frm_cont (item, struct fsock_event, item);
 }
 
+void fsock_event_destroy (struct fsock_event *self) {
+  if (self->type == FSOCK_EVENT_NEW_FRAME) {
+    if (frm_frame_term (self->frame) == 0)
+      free (self->frame);
+  }
+  free (self);
+}
+
 int fsock_rand (int s) {
   return ((struct fsock_sock *)self.socks.elems[s])->uniq;
 }

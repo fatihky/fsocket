@@ -227,6 +227,7 @@ int fsock_rand (int s);
 int fsock_send (int s, int c, struct frm_frame *fr, int flags);
 int fsock_sendc (int s, int type, int b, int c, struct frm_frame *fr,
   int dflags, int flags);
+void fsock_event_destroy (struct fsock_event *self);
 
 #ifdef __cplusplus
 }
