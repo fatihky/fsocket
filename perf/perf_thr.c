@@ -13,18 +13,11 @@ int main(int argc, char *argv[]) {
   //int conn2 = fsock_connect (cli, "0.0.0.0", 9652);
   printf ("srv: %d %d %d\n", srv, cli, srv2);
   printf ("srv: %d | cli: %d\n{bnd: %d} {conn: %d} {conn2: %%d}\n", fsock_rand(srv), fsock_rand(cli), bnd, conn/*, conn2*/);
-  for (int i = 0; i < 3; i++) {
-    struct fsock_event *event = fsock_get_event (srv, 0);
-    if (!event) {
-      i--;
-      continue;
-    }
-    printf ("yeni frame geldi...\n");
-  }
   // struct frm_frame *fr
   struct frm_frame *fr = malloc(sizeof(struct frm_frame));
   frm_frame_init (fr);
   frm_frame_set_data (fr, "fatih", 5);
+  usleep(10000);
   for (int i = 0; i < 10 * 1000000; i++) {
     fsock_send (srv, 0, fr, 0);
   }
