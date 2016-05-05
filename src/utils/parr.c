@@ -147,7 +147,7 @@ void *fsock_parr_begin (struct fsock_parr *self, int *index) {
   void *ptr;
   int i = 0;
 
-  if (self->last == 0 ||self->elems == NULL)
+  if (self->last == 0 || self->elems == NULL)
     goto noelems;
 
   for (int i = 0; i < self->last; i++) {
@@ -166,11 +166,11 @@ noelems:
 void *fsock_parr_next (struct fsock_parr *self, int *index) {
   frm_assert (*index >= 0 && *index <= self->last);
 
-  if (*index == self->last)
+  if (*index == self->last - 1)
     return NULL;
 
   for (int i = *index + 1; i < self->last; i++) {
-    *index++;
+    *index += 1;
 
     if (self->elems[i] == FSOCK_PARR_EMPTY)
       continue;
