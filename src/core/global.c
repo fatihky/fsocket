@@ -184,6 +184,7 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   assert (fr && "you should pass a frame to send");
   if (conn->flags & FSOCK_SOCK_ZOMBIE) {
     errno = EINVAL;
+    printf ("conn->flags & FSOCK_SOCK_ZOMBIE: %d\n");
     return -1;
   }
 
@@ -224,7 +225,7 @@ static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr,
         fsock_conn_type(sock, index) == FSOCK_SOCK_OUT)) {
 
       rc = fsock_send (s, index, fr, sndflags);
-      if (rc != 0 && !(sndflags & FSOCK_NOSTOP_ONERR))
+      if (rc != 0 && !(sndflags & FSOCK_STOP_ONERR))
         break;
     }
   }
