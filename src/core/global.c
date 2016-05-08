@@ -245,6 +245,7 @@ int fsock_rand (int s) {
 int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   struct fsock_sock *sock;
   struct fsock_sock *conn;
+  int canlock = !(flags & FSOCK_SND_UNSAFE);
   sock = self.socks.elems[s];
   assert (sock && sock->type == FSOCK_SOCK_BASE);
   assert (fr && "you should pass a frame to send");
@@ -256,10 +257,10 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
   if (sock->writing == FSOCK_SOCK_STOP_OP && (flags & FSOCK_DONWAIT))
     return EAGAIN;
   if (sock->writing == FSOCK_SOCK_STOP_OP) {
-    fsock_mutex_lock (&sock->sync);
+    if (canlock) fsock_mutex_lock (&sock->sync);
     sock->want_wcond = 1;
     pthread_cond_wait (&sock->wcond, &sock->sync.mutex);
-    fsock_mutex_unlock (&sock->sync);
+    if (canlock) fsock_mutex_unlock (&sock->sync);
   }
   struct frm_out_frame_list_item *li = frm_out_frame_list_item_new();
   if (!li) {
@@ -276,8 +277,7 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
 
   fsock_mutex_unlock(&conn->sync);
 
-  if (!(flags & FSOCK_SND_UNSAFE))
-    fsock_mutex_lock (&sock->sync);
+  if (canlock) fsock_mutex_lock (&sock->sync);
   sock->sndqsz++;
   if (sock->sndhwm > 0 && sock->writing != FSOCK_SOCK_STOP_OP
       && sock->sndqsz >= sock->sndhwm) {
@@ -288,8 +288,7 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
     //fsock_workers_signal();
     //printf ("reads are restarted because of hwm(%d)\n", sock->rcvhwm);
   }
-  if (!(flags & FSOCK_SND_UNSAFE))
-    fsock_mutex_unlock (&sock->sync);
+  if (canlock) fsock_mutex_unlock (&sock->sync);
 }
 
 static inline int fsock_conn_type (struct fsock_sock *sock, int c) {
@@ -313,7 +312,7 @@ static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr,
       ((dflags & FSOCK_DIST_OUT) && /*  Send to only outgoing conns. */
         fsock_conn_type(sock, index) == FSOCK_SOCK_OUT)) {
 
-      rc = fsock_send (s, index, fr, sndflags & FSOCK_SND_UNSAFE);
+      rc = fsock_send (s, index, fr, sndflags | FSOCK_SND_UNSAFE);
       if (rc != 0 && (sndflags & FSOCK_STOP_ONERR))
         break;
     }
