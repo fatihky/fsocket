@@ -39,6 +39,8 @@ struct fsock_sock {
   int rcvhwm;
   int sndqsz;
   int rcvqsz;
+  int want_wcond;
+  pthread_cond_t wcond;
   struct nn_efd efd;
   struct fsock_queue events;
   struct fsock_sock *owner;

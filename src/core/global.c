@@ -224,7 +224,7 @@ struct fsock_event *fsock_get_event (int s, int flags) {
     fsock_sock_bulk_schedule_unsafe(sock, t_start_read, t_stop_read);
     fsock_workers_unlock();
     fsock_workers_signal();
-    //printf ("reads are restarted due to hwm\n");
+    //printf ("reads are restarted because of hwm(%d)\n", sock->rcvhwm);
   }
   fsock_mutex_unlock (&sock->sync);
   return frm_cont (item, struct fsock_event, item);
@@ -253,6 +253,14 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
     errno = EINVAL;
     return -1;
   }
+  if (sock->writing == FSOCK_SOCK_STOP_OP && (flags & FSOCK_DONWAIT))
+    return EAGAIN;
+  if (sock->writing == FSOCK_SOCK_STOP_OP) {
+    fsock_mutex_lock (&sock->sync);
+    sock->want_wcond = 1;
+    pthread_cond_wait (&sock->wcond, &sock->sync.mutex);
+    fsock_mutex_unlock (&sock->sync);
+  }
   struct frm_out_frame_list_item *li = frm_out_frame_list_item_new();
   if (!li) {
     errno = ENOMEM;
@@ -265,7 +273,23 @@ int fsock_send (int s, int c, struct frm_frame *fr, int flags) {
     conn->writing = 1;
   }
   frm_out_frame_list_insert (&conn->ol, li);
+
   fsock_mutex_unlock(&conn->sync);
+
+  if (!(flags & FSOCK_SND_UNSAFE))
+    fsock_mutex_lock (&sock->sync);
+  sock->sndqsz++;
+  if (sock->sndhwm > 0 && sock->writing != FSOCK_SOCK_STOP_OP
+      && sock->sndqsz >= sock->sndhwm) {
+    sock->writing = FSOCK_SOCK_STOP_OP;
+    //fsock_workers_lock();
+    //fsock_sock_bulk_schedule_unsafe(sock, t_stop_write, t_start_write);
+    //fsock_workers_unlock();
+    //fsock_workers_signal();
+    //printf ("reads are restarted because of hwm(%d)\n", sock->rcvhwm);
+  }
+  if (!(flags & FSOCK_SND_UNSAFE))
+    fsock_mutex_unlock (&sock->sync);
 }
 
 static inline int fsock_conn_type (struct fsock_sock *sock, int c) {
@@ -289,7 +313,7 @@ static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr,
       ((dflags & FSOCK_DIST_OUT) && /*  Send to only outgoing conns. */
         fsock_conn_type(sock, index) == FSOCK_SOCK_OUT)) {
 
-      rc = fsock_send (s, index, fr, sndflags);
+      rc = fsock_send (s, index, fr, sndflags & FSOCK_SND_UNSAFE);
       if (rc != 0 && (sndflags & FSOCK_STOP_ONERR))
         break;
     }

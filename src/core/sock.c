@@ -17,17 +17,18 @@ static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
   struct fsock_sock *sock;
   switch (task->type) {
     case FSOCK_START_READ: {
-      printf ("FSOCK_START_READ\n");
+      //printf ("FSOCK_START_READ\n");
       sock = frm_cont (task, struct fsock_sock, t_start_read);
       sock->reading = 1;
       ev_io_start (thr->loop, &sock->rio);
     } break;
     case FSOCK_STOP_READ: {
-      printf ("FSOCK_STOP_READ\n");
+      //printf ("FSOCK_STOP_READ\n");
       sock = frm_cont (task, struct fsock_sock, t_stop_read);
       ev_io_stop (thr->loop, &sock->rio);
     } break;
     case FSOCK_START_WRITE: {
+      // printf ("FSOCK_START_WRITE\n");
       sock = frm_cont (task, struct fsock_sock, t_start_write);
       ev_io_start (thr->loop, &sock->wio);
     } break;
@@ -59,6 +60,8 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   self->rcvhwm = FSOCK_SOCK_HWM_DEFAULT;
   self->sndqsz = 0;
   self->rcvqsz = 0;
+  self->want_wcond = 0;
+  pthread_cond_init(&self->wcond, NULL);
   nn_efd_init (&self->efd);
   frm_parser_init (&self->parser);
   frm_out_frame_list_init (&self->ol);
@@ -73,7 +76,8 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   fsock_task_init (&self->t_close, FSOCK_CLOSE, task_routine, NULL);
 }
 
-static void fsock_sock_conn_parr_term (struct fsock_sock *self, struct fsock_parr *parr) {
+static void fsock_sock_conn_parr_term (struct fsock_sock *self,
+  struct fsock_parr *parr) {
   int i = -1;
   void *ptr = fsock_parr_begin (parr, &i);
 
@@ -87,7 +91,8 @@ static void fsock_sock_conn_parr_term (struct fsock_sock *self, struct fsock_par
   }
 }
 
-static void fsock_sock_bind_parr_term (struct fsock_sock *self, struct fsock_parr *parr) {
+static void fsock_sock_bind_parr_term (struct fsock_sock *self,
+  struct fsock_parr *parr) {
   int i = -1;
   void *ptr = fsock_parr_begin (parr, &i);
 
@@ -284,7 +289,8 @@ stop:
   fsock_mutex_lock (&conn->sync);
   if (!(conn->flags & FSOCK_SOCK_ZOMBIE)) {
     conn->flags |= FSOCK_SOCK_ZOMBIE;
-    printf ("conn->flags: %d FSOCK_SOCK_ZOMBIE: %d\n", conn->flags, FSOCK_SOCK_ZOMBIE);
+    printf ("conn->flags: %d FSOCK_SOCK_ZOMBIE: %d\n", conn->flags,
+      FSOCK_SOCK_ZOMBIE);
   }
   fsock_mutex_unlock (&conn->sync);
 clean:
@@ -298,11 +304,18 @@ void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   if (conn->flags & FSOCK_SOCK_ZOMBIE)
     return;
 
+  int removed = 0;
+  int must_stop = 0;
+
   for (;;) {
     fsock_mutex_lock (&conn->sync);
 
     if (frm_list_empty (&conn->ol.list)) {
       fsock_mutex_unlock (&conn->sync);
+      if (removed > 0) {
+        must_stop = 1;
+        break;
+      }
       goto stop;
     }
 
@@ -333,15 +346,44 @@ void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
         }
         memcpy(&conn->ol, &ol, sizeof (struct frm_out_frame_list));
         fsock_mutex_unlock (&conn->sync);
-        return;
+        if (removed == 0)
+          return;
+        else
+          break;
       }
       if (nw <= 0) {
         printf ("nw: %zd\n", nw);
         goto stop;
       }
-      frm_out_frame_list_written (&ol, nw);
+      removed += frm_out_frame_list_written (&ol, nw);
     }
   }
+
+  if (removed > 0) {
+    struct fsock_sock *owner = conn->owner;
+    fsock_mutex_lock (&conn->owner->sync);
+    owner->sndqsz -= removed;
+    int broadcast = 0;
+    if (owner->sndhwm > 0 && owner->writing == FSOCK_SOCK_STOP_OP
+        && owner->sndqsz < owner->sndhwm) {
+      owner->writing = 0;
+      //printf ("owner->sndhwm > 0 && owner->writing == FSOCK_SOCK_STOP_OP && owner->sndqsz < owner->sndhwm\n");
+      //fsock_workers_lock();
+      //fsock_sock_bulk_schedule_unsafe(owner, t_start_write, t_stop_write);
+      //fsock_workers_unlock();
+      //fsock_workers_signal();
+      if (owner->want_wcond) {
+        owner->want_wcond = 0;
+        broadcast = 1;
+      }
+    }
+    fsock_mutex_unlock (&conn->owner->sync);
+    if (broadcast)
+      pthread_cond_broadcast(&owner->wcond);
+  }
+
+  if (must_stop)
+    goto stop;
 
   return;
 

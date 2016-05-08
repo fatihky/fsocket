@@ -197,6 +197,7 @@ extern "C" {
 /*  Send/recv options.                                                        */
 #define FSOCK_DONWAIT 1
 #define FSOCK_STOP_ONERR 2
+#define FSOCK_SND_UNSAFE 4 /*  for internal use only */
 
 #define FSOCK_EVENT_NEW_CONN 1
 #define FSOCK_EVENT_LOST_CONN 2
