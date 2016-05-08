@@ -75,7 +75,7 @@ void fsock_thread_join (struct fsock_thread *self) {
 }
 
 void fsock_thread_schedule_task (struct fsock_thread *self,
-    struct fsock_task * task) {
+    struct fsock_task *task) {
   fsock_mutex_lock (&self->sync);
   fsock_queue_push (&self->jobs, &task->item);
   ev_async_send (self->loop, &self->job_async);

@@ -26,6 +26,21 @@ struct fsock_thread *f_choose_thr() {
   return thr;
 }
 
+void fsock_workers_lock() {
+  for (int i = 0; i < 4; i++)
+    fsock_mutex_lock (&self.threads[i].sync);
+}
+
+void fsock_workers_unlock() {
+  for (int i = 0; i < 4; i++)
+    fsock_mutex_unlock (&self.threads[i].sync);
+}
+
+void fsock_workers_signal() {
+  for (int i = 0; i < 4; i++)
+    fsock_thread_schedule_task_signal (&self.threads[i]);
+}
+
 static int fsock_global_init() {
   g_initialized = 1;
   fsock_parr_init (&self.socks, 10);
@@ -200,6 +215,17 @@ struct fsock_event *fsock_get_event (int s, int flags) {
   }
   assert (!fsock_queue_empty (&sock->events));
   struct fsock_queue_item *item = fsock_queue_pop (&sock->events);
+  assert (item);
+  sock->rcvqsz--;
+  if (sock->rcvhwm > 0 && sock->reading == FSOCK_SOCK_STOP_OP
+      && sock->rcvqsz < sock->rcvhwm) {
+    sock->reading = 0;
+    fsock_workers_lock();
+    fsock_sock_bulk_schedule_unsafe(sock, t_start_read, t_stop_read);
+    fsock_workers_unlock();
+    fsock_workers_signal();
+    //printf ("reads are restarted due to hwm\n");
+  }
   fsock_mutex_unlock (&sock->sync);
   return frm_cont (item, struct fsock_event, item);
 }
@@ -246,8 +272,8 @@ static inline int fsock_conn_type (struct fsock_sock *sock, int c) {
   return ((struct fsock_sock *)sock->conns.elems[c])->type;
 }
 
-static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr, int dflags,
-    int sndflags) {
+static int fsock_send_all (int s, struct fsock_parr *parr, struct frm_frame *fr,
+    int dflags, int sndflags) {
   struct fsock_sock *sock;
   sock = self.socks.elems[s];
   fsock_mutex_lock (&sock->sync);

@@ -19,6 +19,11 @@
 #define FSOCK_SOCK_ACTIVE 1
 #define FSOCK_SOCK_ZOMBIE 2 /*  connection closed */
 
+/*  used for reading and writing parameters of the socket.
+    if reading or writing is set to this op, then all attached sockets'
+    input or output operations will be stopped. */
+#define FSOCK_SOCK_STOP_OP -1
+
 struct fsock_sock {
   int type;
   int flags;
@@ -60,3 +65,17 @@ void fsock_sock_term (struct fsock_sock *self);
 void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents);
 void fsock_sock_read_handler (EV_P_ ev_io *r, int revents);
 void fsock_sock_write_handler (EV_P_ ev_io *w, int revents);
+
+#define fsock_sock_bulk_schedule_unsafe(sock, field, other_field) { \
+  int i = -1; \
+  for (void *ptr = fsock_parr_begin (&sock->conns, &i); \
+        ptr != fsock_parr_end (&sock->conns); \
+        ptr = fsock_parr_next (&sock->conns, &i)) { \
+    struct fsock_sock *conn = (struct fsock_sock *)ptr; \
+    if (!fsock_queue_item_isinqueue (&conn->field.item)) \
+      fsock_thread_schedule_task_unsafe (conn->thr, &conn->field); \
+    if (fsock_queue_item_isinqueue (&conn->other_field.item)) { \
+      fsock_queue_remove (&conn->thr->jobs, &conn->other_field.item); \
+    } \
+  } \
+}

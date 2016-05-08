@@ -44,3 +44,12 @@ void fsock_thread_start_listen (struct fsock_thread *self,
   struct fsock_sock *sock, char *addr, int port);
 void fsock_thread_start_connection (struct fsock_thread *self,
   struct fsock_sock *sock);
+
+static inline void fsock_thread_schedule_task_unsafe (struct fsock_thread *self,
+    struct fsock_task *task) {
+  fsock_queue_push (&self->jobs, &task->item);
+}
+
+static inline void fsock_thread_schedule_task_signal (struct fsock_thread *self) {
+  ev_async_send (self->loop, &self->job_async);
+}

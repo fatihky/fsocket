@@ -18,9 +18,14 @@ static void task_routine (struct fsock_thread *thr, struct fsock_task *task) {
   switch (task->type) {
     case FSOCK_START_READ: {
       printf ("FSOCK_START_READ\n");
+      sock = frm_cont (task, struct fsock_sock, t_start_read);
+      sock->reading = 1;
+      ev_io_start (thr->loop, &sock->rio);
     } break;
     case FSOCK_STOP_READ: {
       printf ("FSOCK_STOP_READ\n");
+      sock = frm_cont (task, struct fsock_sock, t_stop_read);
+      ev_io_stop (thr->loop, &sock->rio);
     } break;
     case FSOCK_START_WRITE: {
       sock = frm_cont (task, struct fsock_sock, t_start_write);
@@ -258,6 +263,15 @@ void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
       nn_efd_signal (&owner->efd);
       owner->want_efd = 0;
     }
+  }
+  // let's do some high water mark magick
+  if (owner->rcvhwm > 0 && owner->rcvhwm < owner->rcvqsz) {
+    owner->reading = FSOCK_SOCK_STOP_OP;
+    fsock_workers_lock();
+    fsock_sock_bulk_schedule_unsafe(owner, t_stop_read, t_start_read);
+    fsock_workers_unlock();
+    fsock_workers_signal();
+    //printf ("stoppped reads due to hwm\n");
   }
   fsock_mutex_unlock (&owner->sync);
 
