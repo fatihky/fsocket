@@ -1,19 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "../src/fsock.h"
 #include "../src/utils/stopwatch.h"
 
-int main(int argc, char *argv[]) {
+void *srvthr (void *arg) {
+  (void)arg;
   int srv = fsock_socket ("server");
-  int cli = fsock_socket ("client");
-  int srv2 = fsock_socket ("server2");
   int bnd = fsock_bind (srv, "0.0.0.0", 9652);
-  int conn = fsock_connect (cli, "0.0.0.0", 9652);
-  //int conn2 = fsock_connect (cli, "0.0.0.0", 9652);
-  printf ("srv: %d %d %d\n", srv, cli, srv2);
-  printf ("srv: %d | cli: %d\n{bnd: %d} {conn: %d} {conn2: %%d}\n", fsock_rand(srv), fsock_rand(cli), bnd, conn/*, conn2*/);
-  // struct frm_frame *fr
   struct frm_frame *fr = malloc(sizeof(struct frm_frame));
   frm_frame_init (fr);
   frm_frame_set_data (fr, "fatih", 5);
@@ -21,6 +16,13 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < 10 * 1000000; i++) {
     fsock_send (srv, 0, fr, 0);
   }
+  sleep (10);
+}
+
+void *clithr (void *arg) {
+  (void)arg;
+  int cli = fsock_socket ("client");
+  int conn = fsock_connect (cli, "0.0.0.0", 9652);
   struct nn_stopwatch stopwatch;
   nn_stopwatch_init (&stopwatch);
   for (int i = 0; i < 10 * 1000000; i++) {
@@ -36,6 +38,15 @@ int main(int argc, char *argv[]) {
   }
   uint64_t ms = nn_stopwatch_term (&stopwatch);
   printf ("ms: %llu\n", (unsigned long long)ms);
+  sleep (10);
+}
+
+int main(int argc, char *argv[]) {
+  pthread_t thrs[2];
+  pthread_create(&thrs[0], NULL, srvthr, NULL);
+  pthread_create(&thrs[1], NULL, clithr, NULL);
+  pthread_join (thrs[0], NULL);
+  pthread_join (thrs[1], NULL);
   sleep(1000);
   return 0;
 }
