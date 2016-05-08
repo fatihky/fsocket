@@ -166,9 +166,9 @@ noelems:
 }
 
 void *fsock_parr_next (struct fsock_parr *self, int *index) {
-  frm_assert (*index >= 0 && *index <= self->last);
+  frm_assert ((*index >= 0) && ((self->last > 0 && *index <= self->last) || 1));
 
-  if (*index == self->last - 1)
+  if (self->last == 0 || *index == self->last - 1)
     return NULL;
 
   for (int i = *index + 1; i < self->last; i++) {

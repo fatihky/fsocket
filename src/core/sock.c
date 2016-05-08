@@ -76,8 +76,9 @@ void fsock_sock_init (struct fsock_sock *self, int type) {
   fsock_task_init (&self->t_close, FSOCK_CLOSE, task_routine, NULL);
 }
 
+
 static void fsock_sock_conn_parr_term (struct fsock_sock *self,
-  struct fsock_parr *parr) {
+    struct fsock_parr *parr) {
   int i = -1;
   void *ptr = fsock_parr_begin (parr, &i);
 
