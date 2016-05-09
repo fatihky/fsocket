@@ -203,6 +203,116 @@ void fsock_sock_accept_handler (EV_P_ ev_io *a, int revents) {
   printf ("notify socket about this event or do not like zeromq {socket: %d|%d}\n", sock->idx, sock->uniq);
 }
 
+static int fsock_sock_read_routinecxc (EV_P_ ev_io *r) {
+  struct fsock_sock *conn = frm_cont (r, struct fsock_sock, rio);
+  assert (conn->fd == r->fd);
+
+  struct frm_cbuf *cbuf = frm_cbuf_new (1400);
+  int rc = 0;
+
+  if (cbuf == NULL)
+    return EAGAIN;
+
+  ssize_t nread = read (r->fd, cbuf->buf, 1400);
+
+  if (nread == 0)
+    goto stop;
+
+  if (nread < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+    rc = EAGAIN;
+    goto clean;
+  }
+
+  rc = frm_parser_parse (&conn->parser, cbuf, nread);
+
+  if (rc != 0) {
+    printf ("parse error. rc: %d\n", rc);
+    goto stop;
+  }
+
+  struct fsock_queue queue = {NULL, NULL};
+  int cnt;
+
+  while (!frm_list_empty (&conn->parser.in_frames)) {
+    struct frm_list_item *li = frm_list_begin (&conn->parser.in_frames);
+
+    if (!li)
+      break;
+
+    // remove frame from the list
+    frm_list_erase (&conn->parser.in_frames, li);
+
+    struct frm_frame *fr = frm_cont (li, struct frm_frame, item);
+
+    // frm_frame_destroy (fr);
+    //fsock_sock_queue_event (conn->owner, FSOCK_EVENT_NEW_FRAME, fr, -1);
+    int rc = fsock_queue_event (&queue, FSOCK_EVENT_NEW_FRAME, fr, -1);
+    if (rc != 0) break;
+    cnt++;
+  }
+
+  struct fsock_sock *owner = conn->owner;
+  fsock_mutex_lock (&conn->owner->sync);
+  owner->rcvqsz += cnt;
+  //if (owner->sndqsz >= owner->sndhwm)
+  //  ev_io_stop (EV_P_ r);
+  if (cnt > 0) {
+    if (owner->events.tail) {
+      owner->events.tail->next = queue.head;
+      owner->events.tail = queue.tail;
+    }
+    else if (owner->events.head) {
+      owner->events.head->next = queue.head;
+      owner->events.tail = queue.tail;
+    } else {
+      owner->events.head = queue.head;
+      owner->events.tail = queue.tail;
+    }
+    if (owner->want_efd == 1) {
+      nn_efd_signal (&owner->efd);
+      owner->want_efd = 0;
+    }
+  }
+  // let's do some high water mark magick
+  if (owner->rcvhwm > 0 && owner->rcvhwm < owner->rcvqsz) {
+    owner->reading = FSOCK_SOCK_STOP_OP;
+    fsock_workers_lock();
+    fsock_sock_bulk_schedule_unsafe(owner, t_stop_read, t_start_read);
+    fsock_workers_unlock();
+    fsock_workers_signal();
+    //printf ("stoppped reads due to hwm\n");
+  }
+  fsock_mutex_unlock (&owner->sync);
+
+  goto clean;
+
+stop:
+  printf ("bağlantı koptu.\n");
+  ev_io_stop (EV_A_ r);
+  ev_io_stop (EV_A_ &conn->wio);
+  fsock_mutex_lock (&conn->sync);
+  if (!(conn->flags & FSOCK_SOCK_ZOMBIE)) {
+    conn->flags |= FSOCK_SOCK_ZOMBIE;
+    printf ("conn->flags: %d FSOCK_SOCK_ZOMBIE: %d\n", conn->flags,
+      FSOCK_SOCK_ZOMBIE);
+  }
+  fsock_mutex_unlock (&conn->sync);
+  rc = EAGAIN;
+clean:
+  frm_cbuf_unref (cbuf);
+  printf ("rc: %d\n", rc);
+  return rc;
+}
+
+void fsock_sock_read_handleryyy (EV_P_ ev_io *r, int revents) {
+  int rc;
+  do {
+    rc = fsock_sock_read_routinecxc (EV_A_ r);
+    printf ("rc: %d\n", rc);
+  }
+  while (rc == 0);
+}
+
 void fsock_sock_read_handler (EV_P_ ev_io *r, int revents) {
   struct fsock_sock *conn = frm_cont (r, struct fsock_sock, rio);
   assert (conn->fd == r->fd);
@@ -297,6 +407,7 @@ stop:
 clean:
   frm_cbuf_unref (cbuf);
 }
+
 
 void fsock_sock_write_handler (EV_P_ ev_io *w, int revents) {
   struct fsock_sock *conn = frm_cont (w, struct fsock_sock, wio);

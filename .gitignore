@@ -46,6 +46,7 @@ tcpmuxd
 example/example
 perf/perf_ex
 perf/perf_thr
+perf/perf_pubsub
 perf/inproc_lat
 perf/inproc_thr
 perf/local_lat
