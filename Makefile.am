@@ -146,6 +146,8 @@ noinst_PROGRAMS = \
     perf/perf_thr \
     perf/local_thr \
     perf/remote_thr \
+	perf/local_lat \
+    perf/remote_lat \
     example/example
 
 LDFLAGS += -lframer -lnanomsg -lev

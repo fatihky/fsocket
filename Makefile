@@ -104,6 +104,7 @@ build_triplet = x86_64-unknown-linux-gnu
 host_triplet = x86_64-unknown-linux-gnu
 noinst_PROGRAMS = perf/perf_ex$(EXEEXT) perf/perf_thr$(EXEEXT) \
 	perf/local_thr$(EXEEXT) perf/remote_thr$(EXEEXT) \
+	perf/local_lat$(EXEEXT) perf/remote_lat$(EXEEXT) \
 	example/example$(EXEEXT)
 check_PROGRAMS = $(am__EXEEXT_2)
 bin_PROGRAMS = $(am__EXEEXT_1)
@@ -191,6 +192,10 @@ am_fcat_OBJECTS = tools/fcat.$(OBJEXT)
 fcat_OBJECTS = $(am_fcat_OBJECTS)
 fcat_LDADD = $(LDADD)
 fcat_DEPENDENCIES = libfsocket.la
+perf_local_lat_SOURCES = perf/local_lat.c
+perf_local_lat_OBJECTS = perf/local_lat.$(OBJEXT)
+perf_local_lat_LDADD = $(LDADD)
+perf_local_lat_DEPENDENCIES = libfsocket.la
 perf_local_thr_SOURCES = perf/local_thr.c
 perf_local_thr_OBJECTS = perf/local_thr.$(OBJEXT)
 perf_local_thr_LDADD = $(LDADD)
@@ -203,6 +208,10 @@ perf_perf_thr_SOURCES = perf/perf_thr.c
 perf_perf_thr_OBJECTS = perf/perf_thr.$(OBJEXT)
 perf_perf_thr_LDADD = $(LDADD)
 perf_perf_thr_DEPENDENCIES = libfsocket.la
+perf_remote_lat_SOURCES = perf/remote_lat.c
+perf_remote_lat_OBJECTS = perf/remote_lat.$(OBJEXT)
+perf_remote_lat_LDADD = $(LDADD)
+perf_remote_lat_DEPENDENCIES = libfsocket.la
 perf_remote_thr_SOURCES = perf/remote_thr.c
 perf_remote_thr_OBJECTS = perf/remote_thr.$(OBJEXT)
 perf_remote_thr_LDADD = $(LDADD)
@@ -242,11 +251,13 @@ am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libfsocket_la_SOURCES) example/example.c $(fcat_SOURCES) \
-	perf/local_thr.c perf/perf_ex.c perf/perf_thr.c \
-	perf/remote_thr.c tests/feature1.c
+	perf/local_lat.c perf/local_thr.c perf/perf_ex.c \
+	perf/perf_thr.c perf/remote_lat.c perf/remote_thr.c \
+	tests/feature1.c
 DIST_SOURCES = $(libfsocket_la_SOURCES) example/example.c \
-	$(fcat_SOURCES) perf/local_thr.c perf/perf_ex.c \
-	perf/perf_thr.c perf/remote_thr.c tests/feature1.c
+	$(fcat_SOURCES) perf/local_lat.c perf/local_thr.c \
+	perf/perf_ex.c perf/perf_thr.c perf/remote_lat.c \
+	perf/remote_thr.c tests/feature1.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -901,6 +912,12 @@ perf/$(am__dirstamp):
 perf/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) perf/$(DEPDIR)
 	@: > perf/$(DEPDIR)/$(am__dirstamp)
+perf/local_lat.$(OBJEXT): perf/$(am__dirstamp) \
+	perf/$(DEPDIR)/$(am__dirstamp)
+
+perf/local_lat$(EXEEXT): $(perf_local_lat_OBJECTS) $(perf_local_lat_DEPENDENCIES) $(EXTRA_perf_local_lat_DEPENDENCIES) perf/$(am__dirstamp)
+	@rm -f perf/local_lat$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(perf_local_lat_OBJECTS) $(perf_local_lat_LDADD) $(LIBS)
 perf/local_thr.$(OBJEXT): perf/$(am__dirstamp) \
 	perf/$(DEPDIR)/$(am__dirstamp)
 
@@ -919,6 +936,12 @@ perf/perf_thr.$(OBJEXT): perf/$(am__dirstamp) \
 perf/perf_thr$(EXEEXT): $(perf_perf_thr_OBJECTS) $(perf_perf_thr_DEPENDENCIES) $(EXTRA_perf_perf_thr_DEPENDENCIES) perf/$(am__dirstamp)
 	@rm -f perf/perf_thr$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(perf_perf_thr_OBJECTS) $(perf_perf_thr_LDADD) $(LIBS)
+perf/remote_lat.$(OBJEXT): perf/$(am__dirstamp) \
+	perf/$(DEPDIR)/$(am__dirstamp)
+
+perf/remote_lat$(EXEEXT): $(perf_remote_lat_OBJECTS) $(perf_remote_lat_DEPENDENCIES) $(EXTRA_perf_remote_lat_DEPENDENCIES) perf/$(am__dirstamp)
+	@rm -f perf/remote_lat$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(perf_remote_lat_OBJECTS) $(perf_remote_lat_LDADD) $(LIBS)
 perf/remote_thr.$(OBJEXT): perf/$(am__dirstamp) \
 	perf/$(DEPDIR)/$(am__dirstamp)
 
@@ -953,9 +976,11 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include example/$(DEPDIR)/example.Po
+include perf/$(DEPDIR)/local_lat.Po
 include perf/$(DEPDIR)/local_thr.Po
 include perf/$(DEPDIR)/perf_ex.Po
 include perf/$(DEPDIR)/perf_thr.Po
+include perf/$(DEPDIR)/remote_lat.Po
 include perf/$(DEPDIR)/remote_thr.Po
 include src/core/$(DEPDIR)/libfsocket_la-global.Plo
 include src/core/$(DEPDIR)/libfsocket_la-sock.Plo
