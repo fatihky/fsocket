@@ -103,6 +103,7 @@ POST_UNINSTALL = :
 build_triplet = x86_64-unknown-linux-gnu
 host_triplet = x86_64-unknown-linux-gnu
 noinst_PROGRAMS = perf/perf_ex$(EXEEXT) perf/perf_thr$(EXEEXT) \
+	perf/local_thr$(EXEEXT) perf/remote_thr$(EXEEXT) \
 	example/example$(EXEEXT)
 check_PROGRAMS = $(am__EXEEXT_2)
 bin_PROGRAMS = $(am__EXEEXT_1)
@@ -190,6 +191,10 @@ am_fcat_OBJECTS = tools/fcat.$(OBJEXT)
 fcat_OBJECTS = $(am_fcat_OBJECTS)
 fcat_LDADD = $(LDADD)
 fcat_DEPENDENCIES = libfsocket.la
+perf_local_thr_SOURCES = perf/local_thr.c
+perf_local_thr_OBJECTS = perf/local_thr.$(OBJEXT)
+perf_local_thr_LDADD = $(LDADD)
+perf_local_thr_DEPENDENCIES = libfsocket.la
 perf_perf_ex_SOURCES = perf/perf_ex.c
 perf_perf_ex_OBJECTS = perf/perf_ex.$(OBJEXT)
 perf_perf_ex_LDADD = $(LDADD)
@@ -198,6 +203,10 @@ perf_perf_thr_SOURCES = perf/perf_thr.c
 perf_perf_thr_OBJECTS = perf/perf_thr.$(OBJEXT)
 perf_perf_thr_LDADD = $(LDADD)
 perf_perf_thr_DEPENDENCIES = libfsocket.la
+perf_remote_thr_SOURCES = perf/remote_thr.c
+perf_remote_thr_OBJECTS = perf/remote_thr.$(OBJEXT)
+perf_remote_thr_LDADD = $(LDADD)
+perf_remote_thr_DEPENDENCIES = libfsocket.la
 tests_feature1_SOURCES = tests/feature1.c
 tests_feature1_OBJECTS = tests/feature1.$(OBJEXT)
 tests_feature1_LDADD = $(LDADD)
@@ -233,10 +242,11 @@ am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libfsocket_la_SOURCES) example/example.c $(fcat_SOURCES) \
-	perf/perf_ex.c perf/perf_thr.c tests/feature1.c
+	perf/local_thr.c perf/perf_ex.c perf/perf_thr.c \
+	perf/remote_thr.c tests/feature1.c
 DIST_SOURCES = $(libfsocket_la_SOURCES) example/example.c \
-	$(fcat_SOURCES) perf/perf_ex.c perf/perf_thr.c \
-	tests/feature1.c
+	$(fcat_SOURCES) perf/local_thr.c perf/perf_ex.c \
+	perf/perf_thr.c perf/remote_thr.c tests/feature1.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -478,7 +488,7 @@ CFLAGS = -g -O2 -pthread
 CPP = gcc -std=gnu99 -E
 CPPFLAGS =  -D_GNU_SOURCE -D_GNU_SOURCE -D_GNU_SOURCE
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"fsocket\" -DPACKAGE_TARNAME=\"fsocket\" -DPACKAGE_VERSION=\"b5951aa-dirty\" -DPACKAGE_STRING=\"fsocket\ b5951aa-dirty\" -DPACKAGE_BUGREPORT=\"fsocket@freelists.org\" -DPACKAGE_URL=\"https://github.com/fatihky/fsocket\" -DPACKAGE=\"fsocket\" -DVERSION=\"b5951aa-dirty\" -DFSOCK_HAVE_GCC=1 -DFSOCK_HAVE_LINUX=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_EVENTFD=1 -DFSOCK_HAVE_EVENTFD=1 -DHAVE_PIPE=1 -DFSOCK_HAVE_PIPE=1 -DHAVE_PIPE2=1 -DFSOCK_HAVE_PIPE2=1 -DFSOCK_HAVE_CLOCK_MONOTONIC=1 -DHAVE_LIBRT=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_POLL=1 -DFSOCK_HAVE_POLL=1 -DHAVE_EPOLL_CREATE=1 -DFSOCK_USE_EPOLL=1 -DHAVE_ACCEPT4=1 -DFSOCK_HAVE_ACCEPT4=1 -DFSOCK_HAVE_GETADDRINFO_A=1 -DFSOCK_HAVE_SOCKETPAIR=1 -DFSOCK_HAVE_SEMAPHORE=1 -DFSOCK_HAVE_GCC_ATOMIC_BUILTINS=1 -DFSOCK_HAVE_MSG_CONTROL=1 -DFSOCK_USE_EVENTFD=1 -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
+DEFS = -DPACKAGE_NAME=\"fsocket\" -DPACKAGE_TARNAME=\"fsocket\" -DPACKAGE_VERSION=\"b975907-dirty\" -DPACKAGE_STRING=\"fsocket\ b975907-dirty\" -DPACKAGE_BUGREPORT=\"fsocket@freelists.org\" -DPACKAGE_URL=\"https://github.com/fatihky/fsocket\" -DPACKAGE=\"fsocket\" -DVERSION=\"b975907-dirty\" -DFSOCK_HAVE_GCC=1 -DFSOCK_HAVE_LINUX=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_EVENTFD=1 -DFSOCK_HAVE_EVENTFD=1 -DHAVE_PIPE=1 -DFSOCK_HAVE_PIPE=1 -DHAVE_PIPE2=1 -DFSOCK_HAVE_PIPE2=1 -DFSOCK_HAVE_CLOCK_MONOTONIC=1 -DHAVE_LIBRT=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_POLL=1 -DFSOCK_HAVE_POLL=1 -DHAVE_EPOLL_CREATE=1 -DFSOCK_USE_EPOLL=1 -DHAVE_ACCEPT4=1 -DFSOCK_HAVE_ACCEPT4=1 -DFSOCK_HAVE_GETADDRINFO_A=1 -DFSOCK_HAVE_SOCKETPAIR=1 -DFSOCK_HAVE_SEMAPHORE=1 -DFSOCK_HAVE_GCC_ATOMIC_BUILTINS=1 -DFSOCK_HAVE_MSG_CONTROL=1 -DFSOCK_USE_EVENTFD=1 -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
 DEPDIR = .deps
 DLLTOOL = false
 DOLT_BASH = /bin/bash
@@ -493,7 +503,7 @@ EXEEXT =
 FGREP = /bin/grep -F
 FSOCK_ABI_VERSION = 0.1.0
 FSOCK_LIBTOOL_VERSION = 0:1:0
-FSOCK_PACKAGE_VERSION = b5951aa-dirty
+FSOCK_PACKAGE_VERSION = b975907-dirty
 GREP = /bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
@@ -522,10 +532,10 @@ OTOOL64 =
 PACKAGE = fsocket
 PACKAGE_BUGREPORT = fsocket@freelists.org
 PACKAGE_NAME = fsocket
-PACKAGE_STRING = fsocket b5951aa-dirty
+PACKAGE_STRING = fsocket b975907-dirty
 PACKAGE_TARNAME = fsocket
 PACKAGE_URL = https://github.com/fatihky/fsocket
-PACKAGE_VERSION = b5951aa-dirty
+PACKAGE_VERSION = b975907-dirty
 PATH_SEPARATOR = :
 PTHREAD_CC = gcc -std=gnu99
 PTHREAD_CFLAGS = -pthread
@@ -535,7 +545,7 @@ SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-VERSION = b5951aa-dirty
+VERSION = b975907-dirty
 abs_builddir = /root/calismalar/fsocket
 abs_srcdir = /root/calismalar/fsocket
 abs_top_builddir = /root/calismalar/fsocket
@@ -891,6 +901,12 @@ perf/$(am__dirstamp):
 perf/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) perf/$(DEPDIR)
 	@: > perf/$(DEPDIR)/$(am__dirstamp)
+perf/local_thr.$(OBJEXT): perf/$(am__dirstamp) \
+	perf/$(DEPDIR)/$(am__dirstamp)
+
+perf/local_thr$(EXEEXT): $(perf_local_thr_OBJECTS) $(perf_local_thr_DEPENDENCIES) $(EXTRA_perf_local_thr_DEPENDENCIES) perf/$(am__dirstamp)
+	@rm -f perf/local_thr$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(perf_local_thr_OBJECTS) $(perf_local_thr_LDADD) $(LIBS)
 perf/perf_ex.$(OBJEXT): perf/$(am__dirstamp) \
 	perf/$(DEPDIR)/$(am__dirstamp)
 
@@ -903,6 +919,12 @@ perf/perf_thr.$(OBJEXT): perf/$(am__dirstamp) \
 perf/perf_thr$(EXEEXT): $(perf_perf_thr_OBJECTS) $(perf_perf_thr_DEPENDENCIES) $(EXTRA_perf_perf_thr_DEPENDENCIES) perf/$(am__dirstamp)
 	@rm -f perf/perf_thr$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(perf_perf_thr_OBJECTS) $(perf_perf_thr_LDADD) $(LIBS)
+perf/remote_thr.$(OBJEXT): perf/$(am__dirstamp) \
+	perf/$(DEPDIR)/$(am__dirstamp)
+
+perf/remote_thr$(EXEEXT): $(perf_remote_thr_OBJECTS) $(perf_remote_thr_DEPENDENCIES) $(EXTRA_perf_remote_thr_DEPENDENCIES) perf/$(am__dirstamp)
+	@rm -f perf/remote_thr$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(perf_remote_thr_OBJECTS) $(perf_remote_thr_LDADD) $(LIBS)
 tests/$(am__dirstamp):
 	@$(MKDIR_P) tests
 	@: > tests/$(am__dirstamp)
@@ -931,8 +953,10 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include example/$(DEPDIR)/example.Po
+include perf/$(DEPDIR)/local_thr.Po
 include perf/$(DEPDIR)/perf_ex.Po
 include perf/$(DEPDIR)/perf_thr.Po
+include perf/$(DEPDIR)/remote_thr.Po
 include src/core/$(DEPDIR)/libfsocket_la-global.Plo
 include src/core/$(DEPDIR)/libfsocket_la-sock.Plo
 include src/utils/$(DEPDIR)/libfsocket_la-anet.Plo
@@ -1793,13 +1817,13 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man7
 
 #.txt.1:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket b5951aa-dirty" $<
+#	-amanmanual="fsocket b975907-dirty" $<
 #.txt.3:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket b5951aa-dirty" $<
+#	-amanmanual="fsocket b975907-dirty" $<
 #.txt.7:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -b manpage -D doc \
-#	-amanmanual="fsocket b5951aa-dirty" $<
+#	-amanmanual="fsocket b975907-dirty" $<
 
 #.txt.1.html:
 #	$(AM_V_GEN)$(ASCIIDOCTOR) -d manpage -b html5 \

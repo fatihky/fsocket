@@ -144,6 +144,8 @@ EXTRA_DIST += doc/stylesheet.css $(MAN1) $(MAN3) $(MAN7)
 noinst_PROGRAMS = \
     perf/perf_ex \
     perf/perf_thr \
+    perf/local_thr \
+    perf/remote_thr \
     example/example
 
 LDFLAGS += -lframer -lnanomsg -lev
