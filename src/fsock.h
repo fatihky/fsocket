@@ -219,16 +219,16 @@ struct fsock_event {
 #define FSOCK_DIST_IN 1   /*  Distribute only to incoming connections.        */
 #define FSOCK_DIST_OUT 2  /*  Distribute only to outgoing connections.        */
 
-int fsock_socket (char *name);
-int fsock_close (int s);
-int fsock_bind (int s, char *addr, int port);
-int fsock_connect (int s, char *addr, int port);
-struct fsock_event *fsock_get_event (int s, int flags);
-int fsock_rand (int s);
-int fsock_send (int s, int c, struct frm_frame *fr, int flags);
-int fsock_sendc (int s, int type, int b, int c, struct frm_frame *fr,
-  int dflags, int flags);
-void fsock_event_destroy (struct fsock_event *self);
+FSOCK_EXPORT int fsock_socket (char *name);
+FSOCK_EXPORT int fsock_close (int s);
+FSOCK_EXPORT int fsock_bind (int s, char *addr, int port);
+FSOCK_EXPORT int fsock_connect (int s, char *addr, int port);
+FSOCK_EXPORT struct fsock_event *fsock_get_event (int s, int flags);
+FSOCK_EXPORT int fsock_rand (int s);
+FSOCK_EXPORT int fsock_send (int s, int c, struct frm_frame *fr, int flags);
+FSOCK_EXPORT int fsock_sendc (int s, int type, int b, int c, struct frm_frame *fr,
+                int dflags, int flags);
+FSOCK_EXPORT void fsock_event_destroy (struct fsock_event *self);
 
 #ifdef __cplusplus
 }

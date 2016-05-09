@@ -105,7 +105,7 @@ host_triplet = x86_64-unknown-linux-gnu
 noinst_PROGRAMS = perf/perf_ex$(EXEEXT) perf/perf_thr$(EXEEXT) \
 	perf/local_thr$(EXEEXT) perf/remote_thr$(EXEEXT) \
 	perf/local_lat$(EXEEXT) perf/remote_lat$(EXEEXT) \
-	example/example$(EXEEXT)
+	perf/perf_pubsub$(EXEEXT) example/example$(EXEEXT)
 check_PROGRAMS = $(am__EXEEXT_2)
 bin_PROGRAMS = $(am__EXEEXT_1)
 am__append_1 = fcat
@@ -204,6 +204,10 @@ perf_perf_ex_SOURCES = perf/perf_ex.c
 perf_perf_ex_OBJECTS = perf/perf_ex.$(OBJEXT)
 perf_perf_ex_LDADD = $(LDADD)
 perf_perf_ex_DEPENDENCIES = libfsocket.la
+perf_perf_pubsub_SOURCES = perf/perf_pubsub.c
+perf_perf_pubsub_OBJECTS = perf/perf_pubsub.$(OBJEXT)
+perf_perf_pubsub_LDADD = $(LDADD)
+perf_perf_pubsub_DEPENDENCIES = libfsocket.la
 perf_perf_thr_SOURCES = perf/perf_thr.c
 perf_perf_thr_OBJECTS = perf/perf_thr.$(OBJEXT)
 perf_perf_thr_LDADD = $(LDADD)
@@ -252,12 +256,12 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libfsocket_la_SOURCES) example/example.c $(fcat_SOURCES) \
 	perf/local_lat.c perf/local_thr.c perf/perf_ex.c \
-	perf/perf_thr.c perf/remote_lat.c perf/remote_thr.c \
-	tests/feature1.c
+	perf/perf_pubsub.c perf/perf_thr.c perf/remote_lat.c \
+	perf/remote_thr.c tests/feature1.c
 DIST_SOURCES = $(libfsocket_la_SOURCES) example/example.c \
 	$(fcat_SOURCES) perf/local_lat.c perf/local_thr.c \
-	perf/perf_ex.c perf/perf_thr.c perf/remote_lat.c \
-	perf/remote_thr.c tests/feature1.c
+	perf/perf_ex.c perf/perf_pubsub.c perf/perf_thr.c \
+	perf/remote_lat.c perf/remote_thr.c tests/feature1.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -930,6 +934,12 @@ perf/perf_ex.$(OBJEXT): perf/$(am__dirstamp) \
 perf/perf_ex$(EXEEXT): $(perf_perf_ex_OBJECTS) $(perf_perf_ex_DEPENDENCIES) $(EXTRA_perf_perf_ex_DEPENDENCIES) perf/$(am__dirstamp)
 	@rm -f perf/perf_ex$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(perf_perf_ex_OBJECTS) $(perf_perf_ex_LDADD) $(LIBS)
+perf/perf_pubsub.$(OBJEXT): perf/$(am__dirstamp) \
+	perf/$(DEPDIR)/$(am__dirstamp)
+
+perf/perf_pubsub$(EXEEXT): $(perf_perf_pubsub_OBJECTS) $(perf_perf_pubsub_DEPENDENCIES) $(EXTRA_perf_perf_pubsub_DEPENDENCIES) perf/$(am__dirstamp)
+	@rm -f perf/perf_pubsub$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(perf_perf_pubsub_OBJECTS) $(perf_perf_pubsub_LDADD) $(LIBS)
 perf/perf_thr.$(OBJEXT): perf/$(am__dirstamp) \
 	perf/$(DEPDIR)/$(am__dirstamp)
 
@@ -979,6 +989,7 @@ include example/$(DEPDIR)/example.Po
 include perf/$(DEPDIR)/local_lat.Po
 include perf/$(DEPDIR)/local_thr.Po
 include perf/$(DEPDIR)/perf_ex.Po
+include perf/$(DEPDIR)/perf_pubsub.Po
 include perf/$(DEPDIR)/perf_thr.Po
 include perf/$(DEPDIR)/remote_lat.Po
 include perf/$(DEPDIR)/remote_thr.Po
